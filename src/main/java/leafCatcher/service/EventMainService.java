@@ -24,7 +24,10 @@ public class EventMainService {
     public SendMessage makeMessageByText(Update update, Long chatId, Long userId) {
         log.info("By text");
         ActionType actionType = historyService.getActualState(chatId);
-
+        log.info("actualState {}", actionType);
+        if(actionType==null){
+            historyService.setState(chatId, ActionType.ROOT_IS_ABSENCE_INFO);
+        }
         if (actionType == ActionType.ERROR) {
             if (update.getMessage().getText().equals("ff")) {
                 log.info("Admin mode");
