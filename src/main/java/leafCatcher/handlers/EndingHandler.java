@@ -1,0 +1,89 @@
+package leafCatcher.handlers;
+
+import leafCatcher.history.ActionType;
+import leafCatcher.history.DraftService;
+import leafCatcher.history.FSMRoute;
+import leafCatcher.history.HistoryService;
+import leafCatcher.model.Event;
+import leafCatcher.service.MessageService;
+import leafCatcher.service.messageFactory.MarkupFactory;
+import leafCatcher.service.messageFactory.MessageFactory;
+import leafCatcher.storage.EventStorage;
+import leafCatcher.utilityClasses.mapper.EventMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Update;
+
+@Slf4j
+@Component
+public class EndingHandler extends AbstractFsmHandler {
+    public EndingHandler(HistoryService historyService,
+                         MessageFactory messageFactory,
+                         MarkupFactory markupFactory,
+                         EventStorage eventStorage,
+                         MessageService messageService,
+                         DraftService draftService) {
+        super(historyService, messageFactory, markupFactory, eventStorage, messageService, draftService);
+    }
+
+    @FSMRoute(ActionType.END_IS_ABSENCE_INFO)
+    public SendMessage handleNoEndInfo(Update update, Long chatId, Long userId) {
+        historyService.setState(chatId, ActionType.ENDING_DESCRIPTION_CREATION);
+        return new SendMessage(
+                chatId.toString(),
+                messageService.get("bot.info.userWantsCreateEnd")
+        );
+    }
+
+    @FSMRoute(ActionType.ENDING_DESCRIPTION_CREATION)
+    public SendMessage handleEndDescription(Update update, Long chatId, Long userId) {
+        String description = update.getMessage().getText();
+        draftService.setDraftEndingDescription(userId, description);
+        historyService.setState(chatId, ActionType.ENDING_BUTTON_CREATION);
+        historyService.setAttemptsToExecute(userId, 0);
+        return new SendMessage(
+                chatId.toString(),
+                messageService.get("bot.info.userCreatedEndingDescription")
+        );
+    }
+
+    @FSMRoute(ActionType.ENDING_BUTTON_CREATION)
+    public SendMessage handleRootButton(Update update, Long chatId, Long userId) {
+        String buttonName = update.getMessage().getText();
+        String description = draftService.getEndingDescription(userId);
+        Event parent = historyService.getCurrentEvent(userId);
+        if (parent == null) {
+            return new SendMessage(chatId.toString(),
+                    "Не могу создать кнопку: не найден родительский лист 🥲");
+        }
+        Event ending = EventMapper.makeEvent(update, description, buttonName, true);
+        eventStorage.saveChild(parent.getElementId(), ending);
+        historyService.setCurrentEvent(chatId, ending);
+        historyService.setAttemptsToExecute(chatId, 2);
+        historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
+
+        return new SendMessage(chatId.toString(),
+                messageService.get("bot.info.endingButtonCreation"));
+    }
+
+    @FSMRoute(ActionType.GET_ENDING)
+    public SendMessage handleGetEnding(Update update, Long chatId, Long userId) {
+        log.info("GETEND&&&&&");
+        if (!hasCallback(update)) {
+            return wrongInput(chatId, "Нужно нажать кнопку");
+        }
+        Event ending = historyService.getCurrentEvent(userId);
+        historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
+        return new SendMessage(chatId.toString(), ending.getDescription());
+    }
+
+
+    @FSMRoute(ActionType.AFTER_END_CHOICE)
+    public SendMessage handleAfterParty(Update update, Long chatId, Long userId) {
+        log.info("AFTER_PARTY💎🔥");
+        return messageFactory.makeAfterEndMessage(chatId, userId);
+    }
+
+
+}
