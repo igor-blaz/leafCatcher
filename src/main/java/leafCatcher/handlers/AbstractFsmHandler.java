@@ -69,4 +69,9 @@ public abstract class AbstractFsmHandler {
         historyService.setState(chatId, ActionType.WRITE_NEXT_QUESTION);
         return new SendMessage(chatId.toString(), "Продолжение еще не написано");
     }
+
+    protected void handleNoRoot(Update update, Long chatId, Long userId){
+        historyService.setState(chatId, ActionType.ROOT_IS_ABSENCE_INFO);
+        historyService.setAttemptsToExecute(userId, 2);
+    }
 }

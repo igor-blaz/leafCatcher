@@ -27,6 +27,8 @@ public class HelpHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.I_DONT_KNOW)
     public SendMessage handleIDontKnow(Update update, Long chatId, Long userId) {
+        log.info("I dont know handler");
+        log.info("CURRENT ACTION {}", historyService.getActualState(chatId));
         historyService.setAttemptsToExecute(userId, 2);
         return messageFactory.makeIDontKnowMessage(chatId, userId);
     }

@@ -33,7 +33,7 @@ public class StartHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.START)
     public SendMessage handleStart(Update update, Long chatId, Long userId) {
-
+        log.info("Start Handler");
         historyService.setZeroAttempts(userId);
         Event root = eventStorage.getRootEvent();
 
@@ -53,4 +53,14 @@ public class StartHandler extends AbstractFsmHandler {
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
         return messageFactory.makeMessage(chatId, markup, root.getDescription());
     }
+
+    @FSMRoute(ActionType.INTRO)
+    public SendMessage handleIntro(Update update, Long chatId, Long userId) {
+        log.info("Info Handler");
+        historyService.setSkipStart(userId);
+        historyService.setState(chatId, ActionType.START);
+        historyService.setAttemptsToExecute(userId, 2);
+        return messageFactory.makeTextMessage(chatId, "Приветствие");
+    }
+
 }

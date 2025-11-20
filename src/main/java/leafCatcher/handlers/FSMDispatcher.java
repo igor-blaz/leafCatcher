@@ -5,6 +5,7 @@ import leafCatcher.history.ActionType;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
+import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ public class FSMDispatcher {
     private final List<AbstractFsmHandler> handlers;
 
     private final Map<ActionType, FsmRoute> routes = new EnumMap<>(ActionType.class);
+    private final MessageFactory messageFactory;
 
     @PostConstruct
     public void init() {
@@ -49,23 +51,47 @@ public class FSMDispatcher {
 
     public Object dispatch(ActionType state, Update update, Long chatId, Long userId) {
         FsmRoute route = routes.get(state);
-        if (update.hasMessage()
-                && update.getMessage().hasText()
-                && update.getMessage().getText().equals("/start")) {
+        // если мы хотим пропустить старт
+        boolean skipStart = historyService.isSkipStart(userId);
+        boolean isStartCommand =
+                (update.hasMessage()
+                        && update.getMessage().hasText()
+                        && "/start".equals(update.getMessage().getText()
+                ));
 
-            historyService.setState(chatId, ActionType.START);
-            //historyService.setZeroAttempts(userId);
-            Event root = eventStorage.getRootEvent();
-            historyService.setCurrentEvent(userId, root);
-            FsmRoute startRoute = routes.get(ActionType.START);
+        if (isStartCommand && !skipStart) {
+            log.info("Forced Start");
             historyService.reset(chatId, userId);
-            log.info("Глобальная команда /start. Принудительный переход в {}", ActionType.START);
+            historyService.setSkipStart(userId);
+            Event root = eventStorage.getRootEvent();
+            ActionType nextState;
+
+            if (root == null) {
+                log.info("Корневого события нет, переключаемся в ROOT_IS_ABSENCE_INFO");
+                nextState = ActionType.ROOT_IS_ABSENCE_INFO;
+                historyService.setAttemptsToExecute(userId, 2);
+            } else {
+                log.info("Нашли корневое событие: {}", root.getShortName());
+                nextState = ActionType.INTRO;
+                historyService.setCurrentEvent(chatId, root);
+            }
+
+            historyService.setState(chatId, nextState);
+
+            FsmRoute nextRoute = routes.get(nextState);
+            if (nextRoute == null) {
+                return new SendMessage(chatId.toString(),
+                        "Я не знаю, что делать в состоянии " + nextState + " 🤔");
+            }
+
+            log.info("Глобальная команда /start. Переход в {}", nextState);
             try {
-                return startRoute.method().invoke(startRoute.bean(), update, chatId, userId);
+                return nextRoute.method().invoke(nextRoute.bean(), update, chatId, userId);
             } catch (Exception e) {
-                throw new RuntimeException("Ошибка при вызове START-хендлера", e);
+                throw new RuntimeException("Ошибка при вызове хендлера для " + nextState, e);
             }
         }
+
         if (route == null) {
             return new SendMessage(chatId.toString(), "Я не знаю, что делать в этом состоянии 🤔");
         }
@@ -76,6 +102,7 @@ public class FSMDispatcher {
             throw new RuntimeException("Ошибка при вызове FSM-хендлера для " + state, e);
         }
     }
+
 
     private record FsmRoute(Object bean, Method method) {
     }

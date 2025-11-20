@@ -92,14 +92,14 @@ public class MessageFactory {
         if (currentAction == null) {
             return makeTextMessage(chatId, messageService.get("bot.help.default"));
         }
-        log.warn("CurrentAction {}", currentAction.toString());
+        log.warn("CurrentAction {}", currentAction);
         String hint;
         switch (currentAction) {
             case START -> {
-                hint = messageService.get("bot.help.default");
+                hint = "START";
             }
             case GET_CHILD -> {
-                hint = "GET_CHILD ";
+                hint = "ххуй";
             }
             case CREDITS -> {
                 hint = messageService.get("bot.info.credits");

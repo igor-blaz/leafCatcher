@@ -1,7 +1,6 @@
 package leafCatcher.history;
 
 import leafCatcher.model.Event;
-import leafCatcher.storage.EventStorage;
 import leafCatcher.utilityClasses.mapper.EventMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +17,21 @@ public class HistoryService {
     private final Map<Long, Deque<ActionType>> history = new ConcurrentHashMap<>();
     private final Map<Long, Integer> attemptsToExecute = new ConcurrentHashMap<>();
     private final Map<Long, Event> currentEvent = new ConcurrentHashMap<>();
+    private final Map<Long, Boolean> skipForcedStart = new ConcurrentHashMap<>();
+
+    public void setSkipStart(Long userId) {
+        skipForcedStart.put(userId, true);
+    }
+
+    public void doNotSkipStart(Long userId) {
+        skipForcedStart.put(userId, false);
+    }
+
+    public boolean isSkipStart(Long userId) {
+        boolean skip = skipForcedStart.getOrDefault(userId, false);
+        //doNotSkipStart(userId);
+        return skip;
+    }
 
     public void setCurrentEvent(Long userId, Event event) {
         log.info("✅✅ Current Event {}", event.getShortName());
@@ -50,13 +64,19 @@ public class HistoryService {
         }
         return deque.peekLast();
     }
+
     public void reset(Long chatId, Long userId) {
         history.put(chatId, new ArrayDeque<>());
-        setState(chatId, ActionType.START);
         setAttemptsToExecute(userId, 2);
         log.info("Reset completed for chatId={}", chatId);
     }
 
+    public boolean isNewbiePlayer(Long chatId) {
+        int size = history.get(chatId).size();
+        log.info("история игрока {}", history.get(chatId));
+        System.out.println(history.get(chatId));
+        return size <= 2;
+    }
 
 
     public void setState(long chatId, ActionType state) {
