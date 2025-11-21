@@ -84,7 +84,9 @@ public class MessageFactory {
     }
 
     public SendMessage makeTextMessage(Long chatId, String text) {
-        return new SendMessage(chatId.toString(), text);
+        SendMessage sendMessage = new SendMessage(chatId.toString(), text);
+        sendMessage.setParseMode(ParseMode.HTML);
+        return sendMessage;
     }
 
     public SendMessage makeIDontKnowMessage(Long chatId, Long userId) {
@@ -96,25 +98,19 @@ public class MessageFactory {
         String hint;
         switch (currentAction) {
             case START -> {
-                hint = "START";
+                hint = messageService.getMarkdown("ru.bot.info.start");
+            }
+            case RANDOM -> {
+                hint = "Кажется, ты нашел Пасхалку 💀🏴‍. Красава.  Можешь написать  автору о нахождении пасхалки. ️";
             }
             case GET_CHILD -> {
                 hint = messageService.getMarkdown("ru.bot.info.getchild");
             }
             case CREDITS -> {
-                hint = messageService.get("bot.info.credits");
+                hint = messageService.get("ru.bot.info.credits");
             }
             case BACK_OR_FORWARD_QUESTION -> {
-                hint = "BACKORFORWARDQUESTION";
-            }
-            case ROOT_DESCRIPTION_CREATION -> {
-                hint = "ROOTDESCRIPTIONCREATION";
-            }
-            case ROOT_BUTTON_CREATION -> {
-                hint = "ROOTBUTTONCREATION";
-            }
-            case CHILD_IS_ABSENCE_INFO -> {
-                hint = "CHILDISABSENCEINFO";
+                hint = messageService.getMarkdown("ru.bot.info.backOrForwardHelp");
             }
             case CHILD_DESCRIPTION_CREATION -> {
                 hint = messageService.get("bot.help.childDescCreation");

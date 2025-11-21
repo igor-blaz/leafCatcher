@@ -3,7 +3,6 @@ package leafCatcher.handlers;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.DraftService;
 import leafCatcher.history.HistoryService;
-import leafCatcher.model.Event;
 import leafCatcher.service.MessageService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
@@ -26,10 +25,6 @@ public abstract class AbstractFsmHandler {
     protected final MessageService messageService;
     protected final DraftService draftService;
 
-    protected void gotoState(long chatId, leafCatcher.history.ActionType state) {
-        historyService.setState(chatId, state);
-    }
-
     protected boolean hasText(Update update) {
         return update != null &&
                 update.hasMessage() &&
@@ -40,6 +35,46 @@ public abstract class AbstractFsmHandler {
         return update != null &&
                 update.hasCallbackQuery() &&
                 update.getCallbackQuery().getData() != null;
+    }
+    protected SendMessage expectTextOrReject(Update update, Long chatId, String expectedHint) {
+        if (hasCallback(update)) {
+            log.warn("AntiClick: callback received when text expected. data={}", getCallbackData(update));
+            return wrongInput(chatId, expectedHint);
+        }
+        if (!hasText(update)) {
+            return wrongInput(chatId, expectedHint);
+        }
+        return null; // значит всё ок, хендлер продолжает
+    }
+    protected SendMessage rejectStaleCallbackWhenTextExpected(Update update, Long chatId, String expectedHint) {
+        if (hasCallback(update)) {
+            log.warn("AntiClick: stale callback when text expected. data={}", getCallbackData(update));
+            return wrongInput(chatId, expectedHint);
+        }
+        return null;
+    }
+
+
+    protected SendMessage expectCallbackOrReject(Update update, Long chatId, String expectedHint) {
+        if (hasText(update)) {
+            log.warn("AntiClick: text received when callback expected. text={}", getText(update));
+            return wrongInput(chatId, expectedHint);
+        }
+        if (!hasCallback(update)) {
+            return wrongInput(chatId, expectedHint);
+        }
+        return null;
+    }
+
+    protected SendMessage rejectCallbackWhenExpectingText(Update update, Long chatId, String expectedHint) {
+        if (hasCallback(update)) {
+            log.warn("AntiClick: stale callback received when expecting text. data={}", getCallbackData(update));
+            return new SendMessage(
+                    chatId.toString(),
+                    "Эта кнопка уже неактуальна 🙂\nСейчас я жду от тебя " + expectedHint
+            );
+        }
+        return null;
     }
 
     protected String getText(Update update) {
@@ -70,7 +105,7 @@ public abstract class AbstractFsmHandler {
         return new SendMessage(chatId.toString(), "Продолжение еще не написано");
     }
 
-    protected void handleNoRoot(Update update, Long chatId, Long userId){
+    protected void handleNoRoot(Update update, Long chatId, Long userId) {
         historyService.setState(chatId, ActionType.ROOT_IS_ABSENCE_INFO);
         historyService.setAttemptsToExecute(userId, 2);
     }

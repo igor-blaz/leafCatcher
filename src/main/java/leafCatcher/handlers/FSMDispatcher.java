@@ -51,6 +51,7 @@ public class FSMDispatcher {
 
     public Object dispatch(ActionType state, Update update, Long chatId, Long userId) {
         FsmRoute route = routes.get(state);
+        log.info("dispatch {}", state);
         // если мы хотим пропустить старт
         boolean skipStart = historyService.isSkipStart(userId);
         boolean isStartCommand =
@@ -79,6 +80,8 @@ public class FSMDispatcher {
             historyService.setState(chatId, nextState);
 
             FsmRoute nextRoute = routes.get(nextState);
+            log.info("NextRoute {}", nextRoute);
+            log.info("NextState {}", nextState);
             if (nextRoute == null) {
                 return new SendMessage(chatId.toString(),
                         "Я не знаю, что делать в состоянии " + nextState + " 🤔");

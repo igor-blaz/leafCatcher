@@ -4,7 +4,9 @@ import leafCatcher.handlers.FSMDispatcher;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
+import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
+import leafCatcher.utilityClasses.Commands;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,21 +22,26 @@ public class EventMainService {
     private final FSMDispatcher fsmDispatcher;
     private final HistoryService historyService;
     private final EventStorage eventStorage;
+    private final MessageService messageService;
+    private final MessageFactory messageFactory;
 
     public SendMessage makeMessageByText(Update update, Long chatId, Long userId) {
         log.info("By text");
         ActionType actionType = historyService.getActualState(chatId);
+        if (Commands.isStartCommand(update)) {
+            historyService.setState(chatId, ActionType.START);
+            actionType = ActionType.START;
+        }
+
         log.info("actualState {}", actionType);
-        if(actionType==null){
+        if (actionType == null) {
             historyService.setState(chatId, ActionType.ROOT_IS_ABSENCE_INFO);
         }
         if (actionType == ActionType.ERROR) {
             if (update.getMessage().getText().equals("ff")) {
-                log.info("Admin mode");
                 historyService.setState(chatId, ActionType.ADMIN_MODE);
                 actionType = ActionType.ADMIN_MODE;
             } else {
-                log.info("Start");
                 historyService.setState(chatId, ActionType.START);
                 actionType = ActionType.START;
             }
@@ -46,6 +53,12 @@ public class EventMainService {
 
     public SendMessage makeMessageByCallback(Update update, Long chatId, Long userId) {
         log.info("CALLBACK🔥");
+        ActionType current = historyService.getActualState(chatId);
+
+        if (isTextState(current) && !Commands.isStartCommand(update)) {
+            return new SendMessage(chatId.toString(),
+                    "Эта кнопка уже неактуальна 🙂\nСейчас я жду от тебя текст.");
+        }
         String data = update.getCallbackQuery().getData();
         ActionType type;
         try {
@@ -61,6 +74,18 @@ public class EventMainService {
                 return new SendMessage(chatId.toString(), "❌ Неизвестный callback: " + data);
             }
         }
+    }
+
+    private boolean isTextState(ActionType state) {
+        return switch (state) {
+            case CHILD_DESCRIPTION_CREATION,
+                 CHILD_BUTTON_CREATION,
+                 ROOT_DESCRIPTION_CREATION,
+                 ROOT_BUTTON_CREATION,
+                 ENDING_DESCRIPTION_CREATION,
+                 ENDING_BUTTON_CREATION -> true;
+            default -> false;
+        };
     }
 
     private SendMessage dispatch(ActionType actionType,

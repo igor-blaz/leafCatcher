@@ -71,7 +71,7 @@ public class RootCreateHandler extends AbstractFsmHandler {
             return null;
         }
         log.info("❤️getDescription  {}", root.getDescription());
-        historyService.setState(chatId, ActionType.CHILD_IS_ABSENCE_INFO);
+        historyService.setState(chatId, ActionType.CHILD_DESCRIPTION_AWAIT);
         historyService.setAttemptsToExecute(userId, 2);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(List.of(root), userId);
         return messageFactory.makeMessage(chatId, markup, root.getDescription());

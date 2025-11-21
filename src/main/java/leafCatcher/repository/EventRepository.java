@@ -31,11 +31,11 @@ public interface EventRepository extends Neo4jRepository<Event, String> {
 
 
     @Query("""
-            MATCH (n:Event)
+            MATCH (n:Event)-[:NEXT]->(:Event)
             WHERE n.isEnd = FALSE
             RETURN n
             ORDER BY rand()
-            LIMIT 1;
+            LIMIT 1
             """)
     Event getRandomNotEndEvent();
 

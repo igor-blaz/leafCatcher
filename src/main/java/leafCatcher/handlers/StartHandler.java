@@ -46,7 +46,7 @@ public class StartHandler extends AbstractFsmHandler {
         List<Event> children = eventStorage.getChildren(root.getElementId());
         if (children.isEmpty()) {
             log.info("⚠️roots children is empty ");
-            historyService.setState(chatId, ActionType.CHILD_IS_ABSENCE_INFO);
+            historyService.setState(chatId, ActionType.CHILD_DESCRIPTION_AWAIT);
             return null;
         }
         log.info("children {}", children);
@@ -60,7 +60,8 @@ public class StartHandler extends AbstractFsmHandler {
         historyService.setSkipStart(userId);
         historyService.setState(chatId, ActionType.START);
         historyService.setAttemptsToExecute(userId, 2);
-        return messageFactory.makeTextMessage(chatId, "Приветствие");
+        String text = messageService.getMarkdown("ru.bot.info.intro");
+        return messageFactory.makeTextMessage(chatId, text);
     }
 
 }
