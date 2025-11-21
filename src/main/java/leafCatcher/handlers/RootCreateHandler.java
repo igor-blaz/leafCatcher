@@ -49,6 +49,7 @@ public class RootCreateHandler extends AbstractFsmHandler {
     public SendMessage handleRootButton(Update update, Long chatId, Long userId) {
         log.info("Создание кнопки  для корневого события ");
         String buttonName = update.getMessage().getText();
+
         draftService.setRootButtonName(userId, buttonName);
         Draft draft = draftService.get(userId);
         log.info("ButtonName {}", buttonName);

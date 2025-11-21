@@ -99,22 +99,22 @@ public class MessageFactory {
                 hint = "START";
             }
             case GET_CHILD -> {
-                hint = "ххуй";
+                hint = messageService.getMarkdown("ru.bot.info.getchild");
             }
             case CREDITS -> {
                 hint = messageService.get("bot.info.credits");
             }
             case BACK_OR_FORWARD_QUESTION -> {
-                hint = "BACK_OR_FORWARD_QUESTION";
+                hint = "BACKORFORWARDQUESTION";
             }
             case ROOT_DESCRIPTION_CREATION -> {
-                hint = "ROOT_DESCRIPTION_CREATION";
+                hint = "ROOTDESCRIPTIONCREATION";
             }
             case ROOT_BUTTON_CREATION -> {
-                hint = "ROOT_BUTTON_CREATION";
+                hint = "ROOTBUTTONCREATION";
             }
             case CHILD_IS_ABSENCE_INFO -> {
-                hint = "CHILD_IS_ABSENCE_INFO";
+                hint = "CHILDISABSENCEINFO";
             }
             case CHILD_DESCRIPTION_CREATION -> {
                 hint = messageService.get("bot.help.childDescCreation");
@@ -125,7 +125,7 @@ public class MessageFactory {
         }
         historyService.setAttemptsToExecute(userId, 2);
         SendMessage sendMessage = new SendMessage(chatId.toString(), hint);
-        sendMessage.setParseMode(ParseMode.MARKDOWN);
+        sendMessage.setParseMode(ParseMode.HTML);
         return sendMessage;
 
     }

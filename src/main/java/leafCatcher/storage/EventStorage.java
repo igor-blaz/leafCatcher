@@ -27,16 +27,6 @@ public class EventStorage {
         return repository.save(event);
     }
 
-    public Event saveChild(Event event) {
-        return repository.createChild(
-                event.getElementId(),
-                event.getTelegramId(),
-                event.getUpdateId(),
-                event.getShortName(),
-                event.getDescription(),
-                event.getAuthor()
-        );
-    }
 
     public Event saveChild(String parentElementId, Event child) {
         Event savedChild = repository.save(child);
