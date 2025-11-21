@@ -14,7 +14,7 @@ public class EventMapper {
         child.setTelegramId(1L);
         child.setUpdateId(0);
         child.setDescription(description);
-        child.setShortName(buttonName);
+        child.setShortName("▶️ " + buttonName);
         child.setIsRoot(false);
         child.setIsEnd(isEnd);
         child.setIsChangeable(true);
@@ -46,7 +46,7 @@ public class EventMapper {
         root.setTelegramId(0L);
         root.setUpdateId(0);
         root.setDescription(description);
-        root.setShortName(buttonName);
+        root.setShortName("❤️ " + buttonName);
         root.setIsRoot(true);
         root.setIsEnd(false);
         root.setIsChangeable(true);
