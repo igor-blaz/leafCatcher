@@ -38,6 +38,13 @@ public class EndingHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.ENDING_DESCRIPTION_CREATION)
     public SendMessage handleEndDescription(Update update, Long chatId, Long userId) {
+        SendMessage reject = rejectCallbackWhenExpectingText(update, chatId, "текст описания события");
+        if (reject != null) {
+            return reject;
+        }
+        if (!hasText(update)) {
+            return wrongInput(chatId, "текст описания события");
+        }
         String description = update.getMessage().getText();
         draftService.setDraftEndingDescription(userId, description);
         historyService.setState(chatId, ActionType.ENDING_BUTTON_CREATION);
@@ -50,6 +57,13 @@ public class EndingHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.ENDING_BUTTON_CREATION)
     public SendMessage handleRootButton(Update update, Long chatId, Long userId) {
+        SendMessage reject = rejectCallbackWhenExpectingText(update, chatId, "текст описания события");
+        if (reject != null) {
+            return reject;
+        }
+        if (!hasText(update)) {
+            return wrongInput(chatId, "текст описания события");
+        }
         String buttonName = update.getMessage().getText();
         String description = draftService.getEndingDescription(userId);
         Event parent = historyService.getCurrentEvent(userId);

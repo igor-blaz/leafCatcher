@@ -10,14 +10,13 @@ import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 
 @Component
 @Slf4j
-public class CreditsHandler extends AbstractFsmHandler{
+public class CreditsHandler extends AbstractFsmHandler {
 
 
     public CreditsHandler(HistoryService historyService,
@@ -31,14 +30,9 @@ public class CreditsHandler extends AbstractFsmHandler{
 
     @FSMRoute(ActionType.CREDITS)
     public SendMessage handleAfterParty(Update update, Long chatId, Long userId) {
-        if (!hasCallback(update)) {
-            return wrongInput(chatId, "Нужно ");
-        }
         historyService.setAttemptsToExecute(userId, 2);
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
-        String credits = messageService.get("bot.info.credits");
-        SendMessage sendMessage = new SendMessage(chatId.toString(), credits);
-        sendMessage.setParseMode(ParseMode.MARKDOWN);
-        return sendMessage;
+        String credits = messageService.getMarkdown("ru.bot.info.credits");
+        return messageFactory.makeTextMessage(chatId, credits);
     }
 }

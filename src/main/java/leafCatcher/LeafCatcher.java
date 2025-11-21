@@ -19,7 +19,8 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
     private final EventMainService eventMainService;
     private final HistoryService historyService;
-    public static final String ADMIN_CLEAN_DB = "ff";
+
+    public static final String ADMIN_CLEAN_DB = "Пикачуdltt";
 
     @Override
     public void consume(Update update) {
@@ -44,6 +45,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
 
     private SendMessage sendMessageByText(Update update, Long chatId, Long userId) {
         if (update.getMessage().getText().equals(ADMIN_CLEAN_DB)) {
+            log.error("Admin mode включен");
             historyService.setState(chatId, ActionType.ADMIN_MODE);
             historyService.setAttemptsToExecute(userId, 2);
         }
