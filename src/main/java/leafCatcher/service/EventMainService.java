@@ -1,10 +1,10 @@
 package leafCatcher.service;
 
+import leafCatcher.config.Constant;
 import leafCatcher.handlers.FSMDispatcher;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
-import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import leafCatcher.utilityClasses.Commands;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +22,6 @@ public class EventMainService {
     private final FSMDispatcher fsmDispatcher;
     private final HistoryService historyService;
     private final EventStorage eventStorage;
-    private final MessageService messageService;
-    private final MessageFactory messageFactory;
 
     public SendMessage makeMessageByText(Update update, Long chatId, Long userId) {
         log.info("By text");
@@ -38,7 +36,7 @@ public class EventMainService {
             historyService.setState(chatId, ActionType.ROOT_IS_ABSENCE_INFO);
         }
         if (actionType == ActionType.ERROR) {
-            if (update.getMessage().getText().equals("ff")) {
+            if (update.getMessage().getText().equals(Constant.ADMIN_CLEAN_DB)) {
                 historyService.setState(chatId, ActionType.ADMIN_MODE);
                 actionType = ActionType.ADMIN_MODE;
             } else {
