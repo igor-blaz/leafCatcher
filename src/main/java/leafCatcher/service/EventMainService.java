@@ -1,6 +1,5 @@
 package leafCatcher.service;
 
-import leafCatcher.config.Constant;
 import leafCatcher.handlers.FSMDispatcher;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
@@ -9,6 +8,7 @@ import leafCatcher.storage.EventStorage;
 import leafCatcher.utilityClasses.Commands;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -22,6 +22,8 @@ public class EventMainService {
     private final FSMDispatcher fsmDispatcher;
     private final HistoryService historyService;
     private final EventStorage eventStorage;
+    @Value("${admin.secret.command.cleanNeo4j}")
+    private String adminCleanDb;
 
     public SendMessage makeMessageByText(Update update, Long chatId, Long userId) {
         log.info("By text");
@@ -36,7 +38,7 @@ public class EventMainService {
             historyService.setState(chatId, ActionType.ROOT_IS_ABSENCE_INFO);
         }
         if (actionType == ActionType.ERROR) {
-            if (update.getMessage().getText().equals(Constant.ADMIN_CLEAN_DB)) {
+            if (update.getMessage().getText().equals(adminCleanDb)) {
                 historyService.setState(chatId, ActionType.ADMIN_MODE);
                 actionType = ActionType.ADMIN_MODE;
             } else {

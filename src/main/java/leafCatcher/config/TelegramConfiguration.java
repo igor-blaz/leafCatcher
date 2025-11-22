@@ -18,6 +18,9 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 @Configuration
 public class TelegramConfiguration {
 
+    @Value("${admin.secret.command.cleanNeo4j}")
+    private String adminCleanDb;
+
     @Value("${telegram.bot.token}")
     private String botToken;
 
@@ -38,7 +41,7 @@ public class TelegramConfiguration {
     @Bean
     public LeafCatcher leafCatcher(TelegramClient telegramClient,
                                    EventMainService eventMainService, HistoryService historyService) {
-        return new LeafCatcher(telegramClient, eventMainService, historyService);
+        return new LeafCatcher(telegramClient, eventMainService, historyService, adminCleanDb);
     }
 
     @Bean

@@ -1,6 +1,5 @@
 package leafCatcher.handlers;
 
-import leafCatcher.config.Constant;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
@@ -10,6 +9,7 @@ import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 @Slf4j
 @Component
 public class WarningHandler extends AbstractFsmHandler {
+
 
     public WarningHandler(HistoryService historyService,
                           MessageFactory messageFactory,
@@ -31,7 +32,7 @@ public class WarningHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.ADMIN_MODE)
     public SendMessage adminMode(Update update, Long chatId, Long userId) {
         log.info("AdminMode method");
-        if (update.getMessage().getText().equals(Constant.ADMIN_CLEAN_DB)) {
+        if (update.getMessage().getText().equals(super.adminCleanDb)) {
             eventStorage.killThemAll();
             historyService.setState(chatId, ActionType.START);
             historyService.setAttemptsToExecute(userId, 2);

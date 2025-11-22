@@ -1,12 +1,12 @@
 package leafCatcher;
 
-import leafCatcher.config.Constant;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
 import leafCatcher.service.EventMainService;
 import leafCatcher.utilityClasses.GetUserIdOrChatId;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -20,6 +20,9 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
     private final EventMainService eventMainService;
     private final HistoryService historyService;
+
+    @Value("${admin.secret.command.cleanNeo4j}")
+    private String adminCleanDb;
 
 
     @Override
@@ -44,7 +47,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
     }
 
     private SendMessage sendMessageByText(Update update, Long chatId, Long userId) {
-        if (update.getMessage().getText().equals(Constant.ADMIN_CLEAN_DB)) {
+        if (update.getMessage().getText().equals(adminCleanDb)) {
             log.error("Admin mode включен");
             historyService.setState(chatId, ActionType.ADMIN_MODE);
             historyService.setAttemptsToExecute(userId, 2);
