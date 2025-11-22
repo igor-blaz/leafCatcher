@@ -1,5 +1,6 @@
 package leafCatcher;
 
+import leafCatcher.config.Constant;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
 import leafCatcher.service.EventMainService;
@@ -20,7 +21,6 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
     private final EventMainService eventMainService;
     private final HistoryService historyService;
 
-    public static final String ADMIN_CLEAN_DB = "Пикачуdltt";
 
     @Override
     public void consume(Update update) {
@@ -44,7 +44,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
     }
 
     private SendMessage sendMessageByText(Update update, Long chatId, Long userId) {
-        if (update.getMessage().getText().equals(ADMIN_CLEAN_DB)) {
+        if (update.getMessage().getText().equals(Constant.ADMIN_CLEAN_DB)) {
             log.error("Admin mode включен");
             historyService.setState(chatId, ActionType.ADMIN_MODE);
             historyService.setAttemptsToExecute(userId, 2);
