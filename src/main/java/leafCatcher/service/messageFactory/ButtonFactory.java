@@ -9,13 +9,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 public class ButtonFactory {
     private static final String BACK = "⏪ Назад";
     private static final String NEXT = "🔥 Далее";
-    private static final String WRITE_NEXT = "🪶 Написать продолжение";
-    private static final String I_WANT_WRITE_ENDING = "🔑 Написать концовку";
+    private static final String WRITE_NEXT = "🪶 Продолжить";
+    private static final String I_WANT_WRITE_ENDING = "🔑 Закончить";
     private static final String I_DONT_WANT_WRITE = "🙅🚫 Не хочу писать";
     private static final String CREDITS = "💎 Конец?";
     private static final String HELP_ME = "❓Помощь";
     private static final String START = "⚡ В начало";
     private static final String RANDOM = "🧨 Случайное событие";
+    private static final String PUT_IN_MEMORY = "🧠 Запомнить";
+    private static final String BOND = "🔗 Связать с памятью";
 
     public InlineKeyboardButton createRandomButton() {
         return InlineKeyboardButton.builder()
@@ -56,6 +58,20 @@ public class ButtonFactory {
         return InlineKeyboardButton.builder()
                 .text(I_WANT_WRITE_ENDING)
                 .callbackData(ActionType.END_IS_ABSENCE_INFO.toString())
+                .build();
+    }
+
+    public InlineKeyboardButton showMemory() {
+        return InlineKeyboardButton.builder()
+                .text(BOND)
+                .callbackData(ActionType.BOND.toString())
+                .build();
+    }
+
+    public InlineKeyboardButton putInMemory() {
+        return InlineKeyboardButton.builder()
+                .text(PUT_IN_MEMORY)
+                .callbackData(ActionType.PUT_IN_MEMORY.toString())
                 .build();
     }
 

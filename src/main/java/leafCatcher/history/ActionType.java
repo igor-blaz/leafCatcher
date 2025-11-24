@@ -21,6 +21,10 @@ public enum ActionType {
     GET_CHILD,
     REPEAT_CURRENT,
 
+
+    PUT_IN_MEMORY,
+    BOND,
+
     END_IS_ABSENCE_INFO,
     GET_ENDING,
     ENDING_DESCRIPTION_CREATION,
