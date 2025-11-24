@@ -34,6 +34,12 @@ public class EventStorage {
         return savedChild;
     }
 
+    public Event saveChildNoBack(String parentElementId, Event child) {
+        Event savedChild = repository.save(child);
+        repository.linkParentChildNoBack(parentElementId, savedChild.getElementId());
+        return savedChild;
+    }
+
     public Event getRandom() {
         return repository.getRandomNotEndEvent();
     }

@@ -18,6 +18,16 @@ public class HistoryService {
     private final Map<Long, Integer> attemptsToExecute = new ConcurrentHashMap<>();
     private final Map<Long, Event> currentEvent = new ConcurrentHashMap<>();
     private final Map<Long, Boolean> skipForcedStart = new ConcurrentHashMap<>();
+    Map<Long, Event> memory = new ConcurrentHashMap<>();
+
+
+    public void addInMemory(Long userId, Event event) {
+        memory.put(userId, event);
+    }
+
+    public Event showMemory(Long userId) {
+        return memory.get(userId);
+    }
 
     public void setSkipStart(Long userId) {
         skipForcedStart.put(userId, true);
@@ -71,12 +81,7 @@ public class HistoryService {
         log.info("Reset completed for chatId={}", chatId);
     }
 
-    public boolean isNewbiePlayer(Long chatId) {
-        int size = history.get(chatId).size();
-        log.info("история игрока {}", history.get(chatId));
-        System.out.println(history.get(chatId));
-        return size <= 2;
-    }
+
 
 
     public void setState(long chatId, ActionType state) {

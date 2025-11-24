@@ -4,7 +4,6 @@ import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.MessageService;
-import leafCatcher.storage.EventStorage;
 import leafCatcher.utilityClasses.ButtonRowDesign;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +21,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MessageFactory {
     private final MessageService messageService;
-    private final EventStorage storage;
-    private final MarkupFactory markupFactory;
     private final HistoryService historyService;
 
     public SendMessage makeMessage(long chatId,
@@ -36,22 +33,16 @@ public class MessageFactory {
                 .build();
     }
 
-    public SendMessage makeWriteOrNotEnding(Long chatId) {
-        InlineKeyboardButton iDontWant = ButtonFactory.createIDontWantWrite();
-        InlineKeyboardButton help = ButtonFactory.createIDontKnowButton();
-
-        List<InlineKeyboardRow> row = ButtonRowDesign.horizontal(List.of(iDontWant, help));
-
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup(row);
-        return makeMessage(chatId, markup, messageService.get("bot.info.thereIsNoChildEvent"));
-    }
 
     public SendMessage makeWriteOrNotMessage(Long chatId, Event event) {
         InlineKeyboardButton iDontWant = ButtonFactory.createIDontWantWrite();
         InlineKeyboardButton iWant = ButtonFactory.createToBeContinuedButton();
         InlineKeyboardButton iWantWriteEnding = ButtonFactory.createWriteEndButton();
+        InlineKeyboardButton insertFromMemory = ButtonFactory.showMemory();
+        InlineKeyboardButton putInMemory = ButtonFactory.putInMemory();
 
-        List<InlineKeyboardRow> row = ButtonRowDesign.twoOnTopOneBottom(iWant, iDontWant, iWantWriteEnding);
+        List<InlineKeyboardRow> row = ButtonRowDesign.squareRow2x2PlusOne(iWant, iDontWant,
+                iWantWriteEnding, putInMemory, insertFromMemory);
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(row);
         return makeMessage(chatId, markup, event.getDescription());
@@ -77,8 +68,9 @@ public class MessageFactory {
         InlineKeyboardButton goToStart = ButtonFactory.createStartButton();
         InlineKeyboardButton back = ButtonFactory.createGoBackButton();
         InlineKeyboardButton random = ButtonFactory.createRandomButton();
-        List<InlineKeyboardRow> keyboardRows = ButtonRowDesign.twoOnTopOneBottom(goToStart, back, credits);
-        keyboardRows.add(new InlineKeyboardRow(random));
+        InlineKeyboardButton putInMemory = ButtonFactory.putInMemory();
+        List<InlineKeyboardRow> keyboardRows = ButtonRowDesign.squareRow2x2PlusOne(goToStart,
+                back, random, putInMemory, credits);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboardRows);
         return makeMessage(chatId, markup, "Поздравляю, вы прошли игру");
     }
