@@ -22,6 +22,7 @@ public class ButtonRowDesign {
                 })
 
                 .toList();
+
     }
 
     public List<InlineKeyboardRow> horizontal(List<InlineKeyboardButton> buttons) {
@@ -56,6 +57,17 @@ public class ButtonRowDesign {
                                                        InlineKeyboardButton button5) {
         List<InlineKeyboardRow> rows = squareRow2x2(button1, button2, button3, button4);
         rows.addAll(oneHorizontalRow(button5));
+        return rows;
+    }
+
+    public List<InlineKeyboardRow> squareRow2x2PlusTwo(InlineKeyboardButton button1,
+                                                       InlineKeyboardButton button2,
+                                                       InlineKeyboardButton button3,
+                                                       InlineKeyboardButton button4,
+                                                       InlineKeyboardButton button5,
+                                                       InlineKeyboardButton button6) {
+        List<InlineKeyboardRow> rows = squareRow2x2PlusOne(button1, button2, button3, button4, button5);
+        rows.addAll(oneHorizontalRow(button6));
         return rows;
     }
 

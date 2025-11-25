@@ -33,13 +33,12 @@ public class MessageFactory {
                 .build();
     }
 
-
     public SendMessage makeWriteOrNotMessage(Long chatId, Event event) {
         InlineKeyboardButton iDontWant = ButtonFactory.createIDontWantWrite();
         InlineKeyboardButton iWant = ButtonFactory.createToBeContinuedButton();
         InlineKeyboardButton iWantWriteEnding = ButtonFactory.createWriteEndButton();
-        InlineKeyboardButton insertFromMemory = ButtonFactory.showMemory();
-        InlineKeyboardButton putInMemory = ButtonFactory.putInMemory();
+        InlineKeyboardButton insertFromMemory = ButtonFactory.createBondButton();
+        InlineKeyboardButton putInMemory = ButtonFactory.createPutInMemoryButton();
 
         List<InlineKeyboardRow> row = ButtonRowDesign.squareRow2x2PlusOne(iWant, iDontWant,
                 iWantWriteEnding, putInMemory, insertFromMemory);
@@ -68,7 +67,7 @@ public class MessageFactory {
         InlineKeyboardButton goToStart = ButtonFactory.createStartButton();
         InlineKeyboardButton back = ButtonFactory.createGoBackButton();
         InlineKeyboardButton random = ButtonFactory.createRandomButton();
-        InlineKeyboardButton putInMemory = ButtonFactory.putInMemory();
+        InlineKeyboardButton putInMemory = ButtonFactory.createPutInMemoryButton();
         List<InlineKeyboardRow> keyboardRows = ButtonRowDesign.squareRow2x2PlusOne(goToStart,
                 back, random, putInMemory, credits);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboardRows);
