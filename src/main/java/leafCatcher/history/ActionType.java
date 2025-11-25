@@ -3,6 +3,7 @@ package leafCatcher.history;
 public enum ActionType {
     INTRO,
     START,
+    DO_ACTION,
     GO_BACK,
 
     BACK_OR_FORWARD_QUESTION,

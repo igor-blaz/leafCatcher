@@ -8,10 +8,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 @UtilityClass
 public class ButtonFactory {
     private static final String BACK = "⏪ Назад";
+    private static final String DO_ACTION = "⚡ Действие";
     private static final String NEXT = "🔥 Далее";
     private static final String WRITE_NEXT = "🪶 Продолжить";
     private static final String I_WANT_WRITE_ENDING = "🔑 Закончить";
-    private static final String I_DONT_WANT_WRITE = "🙅🚫 Не хочу писать";
+    private static final String I_DONT_WANT_WRITE = "🚫 Вернуться";
     private static final String CREDITS = "💎 Конец?";
     private static final String HELP_ME = "❓Помощь";
     private static final String START = "⚡ В начало";
@@ -25,6 +26,14 @@ public class ButtonFactory {
                 .callbackData(ActionType.RANDOM.toString())
                 .build();
     }
+
+    public InlineKeyboardButton createRepeatCurrentEventButton() {
+        return InlineKeyboardButton.builder()
+                .text(BACK)
+                .callbackData(ActionType.REPEAT_CURRENT.toString())
+                .build();
+    }
+
 
     public InlineKeyboardButton createToBeContinuedButton() {
         return InlineKeyboardButton.builder()
@@ -61,20 +70,26 @@ public class ButtonFactory {
                 .build();
     }
 
-    public InlineKeyboardButton showMemory() {
+    public InlineKeyboardButton createBondButton() {
         return InlineKeyboardButton.builder()
                 .text(BOND)
                 .callbackData(ActionType.BOND.toString())
                 .build();
     }
 
-    public InlineKeyboardButton putInMemory() {
+    public InlineKeyboardButton createPutInMemoryButton() {
         return InlineKeyboardButton.builder()
                 .text(PUT_IN_MEMORY)
                 .callbackData(ActionType.PUT_IN_MEMORY.toString())
                 .build();
     }
 
+    public InlineKeyboardButton createActionButton() {
+        return InlineKeyboardButton.builder()
+                .text(DO_ACTION)
+                .callbackData(ActionType.DO_ACTION.toString())
+                .build();
+    }
 
     public InlineKeyboardButton createCreditsButton() {
         return InlineKeyboardButton.builder()
