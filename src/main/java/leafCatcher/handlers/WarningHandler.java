@@ -4,12 +4,11 @@ import leafCatcher.history.ActionType;
 import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -24,9 +23,9 @@ public class WarningHandler extends AbstractFsmHandler {
                           MessageFactory messageFactory,
                           MarkupFactory markupFactory,
                           EventStorage eventStorage,
-                          MessageService messageService,
+                          TextService textService,
                           DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, messageService, draftService);
+        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
     }
 
     @FSMRoute(ActionType.ADMIN_MODE)

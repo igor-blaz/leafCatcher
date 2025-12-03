@@ -5,7 +5,7 @@ import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -22,10 +22,10 @@ public class QuestionHandler extends AbstractFsmHandler {
                            MessageFactory messageFactory,
                            MarkupFactory markupFactory,
                            EventStorage eventStorage,
-                           MessageService messageService,
+                           TextService textService,
                            DraftService draftService) {
         super(historyService, messageFactory, markupFactory,
-                eventStorage, messageService, draftService);
+                eventStorage, textService, draftService);
     }
 
     @FSMRoute(ActionType.BACK_OR_FORWARD_QUESTION)

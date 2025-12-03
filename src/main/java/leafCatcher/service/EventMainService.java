@@ -25,32 +25,37 @@ public class EventMainService {
     @Value("${admin.secret.command.cleanNeo4j}")
     private String adminCleanDb;
 
+    //Работает с текстами, которые написал пользователь
     public SendMessage makeMessageByText(Update update, Long chatId, Long userId) {
-        log.info("By text");
         ActionType actionType = historyService.getActualState(chatId);
         if (Commands.isStartCommand(update)) {
             historyService.setState(chatId, ActionType.START);
             actionType = ActionType.START;
         }
-
         log.info("actualState {}", actionType);
         if (actionType == null) {
             historyService.setState(chatId, ActionType.ROOT_IS_ABSENCE_INFO);
         }
         if (actionType == ActionType.ERROR) {
-            if (update.getMessage().getText().equals(adminCleanDb)) {
-                historyService.setState(chatId, ActionType.ADMIN_MODE);
-                actionType = ActionType.ADMIN_MODE;
-            } else {
-                historyService.setState(chatId, ActionType.START);
-                actionType = ActionType.START;
-            }
-            historyService.reset(chatId, userId);
+            actionType = isErrorHandler(update, chatId, userId);
         }
         return dispatch(actionType, update, chatId, userId);
-
     }
 
+    /**
+     * Обрабатывает callback-запросы от нажатия кнопок Telegram.
+     * <p>
+     * Поведение:
+     * - если бот ждёт текст, а пришёл callback (и это не /start), возвращает сообщение, что кнопка неактуальна;
+     * - если data совпадает с именем ActionType — делегирует выполнение в dispatch;
+     * - если data — UUID события, загружает событие и выполняет GET_CHILD;
+     * - иначе возвращает сообщение об неизвестном callback.
+     *
+     * @param update апдейт от Telegram
+     * @param chatId идентификатор чата
+     * @param userId идентификатор пользователя
+     * @return сообщение для отправки пользователю
+     */
     public SendMessage makeMessageByCallback(Update update, Long chatId, Long userId) {
         log.info("CALLBACK🔥");
         ActionType current = historyService.getActualState(chatId);
@@ -92,12 +97,14 @@ public class EventMainService {
                                  Update update, Long chatId, Long userId) {
         ActionType takeAgainActionType;
         Object takeAgainResult;
+
         Object result = fsmDispatcher.dispatch(actionType, update, chatId, userId);
         log.info("ActionType buttonservice {}", actionType);
         if (result instanceof SendMessage sendMessage) {
             log.info("Result {}", result);
             return sendMessage;
         }
+
         takeAgainActionType = historyService.getActualState(chatId);
         takeAgainResult = fsmDispatcher.dispatch(takeAgainActionType, update, chatId, userId);
         if (takeAgainResult instanceof SendMessage sendMessage) {
@@ -107,6 +114,7 @@ public class EventMainService {
         return new SendMessage(chatId.toString(), "Ошибка");
     }
 
+    //Проверка, String == UUID?
     private boolean isUUID(String string) {
         if (string == null) return false;
         try {
@@ -115,6 +123,20 @@ public class EventMainService {
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    private ActionType isErrorHandler(Update update, Long chatId, Long userId) {
+        ActionType actionType;
+        if (update.getMessage().getText().equals(adminCleanDb)) {
+            historyService.setState(chatId, ActionType.ADMIN_MODE);
+            actionType = ActionType.ADMIN_MODE;
+        } else {
+            historyService.setState(chatId, ActionType.START);
+            actionType = ActionType.START;
+        }
+        historyService.reset(chatId, userId);
+        return actionType;
+
     }
 
 }

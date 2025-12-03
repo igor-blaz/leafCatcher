@@ -5,7 +5,7 @@ import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -24,9 +24,9 @@ public class GoBackHandler extends AbstractFsmHandler {
                          MessageFactory messageFactory,
                          MarkupFactory markupFactory,
                          EventStorage eventStorage,
-                         MessageService messageService,
+                         TextService textService,
                          DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, messageService, draftService);
+        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
     }
 
     @FSMRoute(ActionType.GO_BACK)

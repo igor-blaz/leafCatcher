@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 
 @Service
 @RequiredArgsConstructor
-public class MessageService {
+public class TextService {
 
     private final MessageSource messageSource;
 
@@ -33,7 +33,5 @@ public class MessageService {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-
-
     }
 }

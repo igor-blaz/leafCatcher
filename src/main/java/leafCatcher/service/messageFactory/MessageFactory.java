@@ -3,7 +3,7 @@ package leafCatcher.service.messageFactory;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.utilityClasses.ButtonRowDesign;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class MessageFactory {
-    private final MessageService messageService;
+    private final TextService textService;
     private final HistoryService historyService;
 
     public SendMessage makeMessage(long chatId,
@@ -83,31 +83,31 @@ public class MessageFactory {
     public SendMessage makeIDontKnowMessage(Long chatId, Long userId) {
         ActionType currentAction = historyService.getActualState(chatId);
         if (currentAction == null) {
-            return makeTextMessage(chatId, messageService.get("bot.help.default"));
+            return makeTextMessage(chatId, textService.get("bot.help.default"));
         }
         log.warn("CurrentAction {}", currentAction);
         String hint;
         switch (currentAction) {
             case START -> {
-                hint = messageService.getMarkdown("ru.bot.info.start");
+                hint = textService.getMarkdown("ru.bot.info.start");
             }
             case RANDOM -> {
                 hint = "Кажется, ты нашел Пасхалку 💀🏴‍. Красава.  Можешь написать  автору о нахождении пасхалки. ️";
             }
             case GET_CHILD -> {
-                hint = messageService.getMarkdown("ru.bot.info.getchild");
+                hint = textService.getMarkdown("ru.bot.info.getchild");
             }
             case CREDITS -> {
-                hint = messageService.get("ru.bot.info.credits");
+                hint = textService.get("ru.bot.info.credits");
             }
             case BACK_OR_FORWARD_QUESTION -> {
-                hint = messageService.getMarkdown("ru.bot.info.backOrForwardHelp");
+                hint = textService.getMarkdown("ru.bot.info.backOrForwardHelp");
             }
             case CHILD_DESCRIPTION_CREATION -> {
-                hint = messageService.get("bot.help.childDescCreation");
+                hint = textService.get("bot.help.childDescCreation");
             }
             default -> {
-                hint = messageService.get("bot.help.default");
+                hint = textService.get("bot.help.default");
             }
         }
         historyService.setAttemptsToExecute(userId, 2);

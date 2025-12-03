@@ -102,6 +102,7 @@ public class MarkupFactory {
 
 
         }
+        actionButtons.add(back);
         return ButtonRowDesign.horizontal(actionButtons);
     }
 

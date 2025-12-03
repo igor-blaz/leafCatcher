@@ -5,7 +5,7 @@ import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -22,9 +22,9 @@ public class EndingHandler extends AbstractFsmHandler {
                          MessageFactory messageFactory,
                          MarkupFactory markupFactory,
                          EventStorage eventStorage,
-                         MessageService messageService,
+                         TextService textService,
                          DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, messageService, draftService);
+        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
     }
 
     @FSMRoute(ActionType.END_IS_ABSENCE_INFO)
@@ -32,7 +32,7 @@ public class EndingHandler extends AbstractFsmHandler {
         historyService.setState(chatId, ActionType.ENDING_DESCRIPTION_CREATION);
         return new SendMessage(
                 chatId.toString(),
-                messageService.get("bot.info.userWantsCreateEnd")
+                textService.get("bot.info.userWantsCreateEnd")
         );
     }
 
@@ -51,7 +51,7 @@ public class EndingHandler extends AbstractFsmHandler {
         historyService.setAttemptsToExecute(userId, 0);
         return new SendMessage(
                 chatId.toString(),
-                messageService.get("bot.info.userCreatedEndingDescription")
+                textService.get("bot.info.userCreatedEndingDescription")
         );
     }
 
@@ -78,7 +78,7 @@ public class EndingHandler extends AbstractFsmHandler {
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
 
         return new SendMessage(chatId.toString(),
-                messageService.get("bot.info.endingButtonCreation"));
+                textService.get("bot.info.endingButtonCreation"));
     }
 
     @FSMRoute(ActionType.GET_ENDING)

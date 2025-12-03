@@ -2,7 +2,7 @@ package leafCatcher.handlers;
 
 import leafCatcher.history.*;
 import leafCatcher.model.Event;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -24,16 +24,16 @@ public class RootCreateHandler extends AbstractFsmHandler {
                              MessageFactory messageFactory,
                              MarkupFactory markupFactory,
                              EventStorage eventStorage,
-                             MessageService messageService,
+                             TextService textService,
                              DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, messageService, draftService);
+        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
     }
 
     @FSMRoute(ActionType.ROOT_IS_ABSENCE_INFO)
     public SendMessage handleRootNotification(Update update, Long chatId, Long userId) {
         log.info("Root is absence");
         historyService.setState(chatId, ActionType.ROOT_DESCRIPTION_CREATION);
-        return new SendMessage(chatId.toString(), messageService.get("bot.info.thereIsNoRoot"));
+        return new SendMessage(chatId.toString(), textService.get("bot.info.thereIsNoRoot"));
     }
 
     @FSMRoute(ActionType.ROOT_DESCRIPTION_CREATION)
@@ -42,7 +42,7 @@ public class RootCreateHandler extends AbstractFsmHandler {
         draftService.setRootDescription(userId, description);
         historyService.setState(chatId, ActionType.ROOT_BUTTON_CREATION);
         log.info("description {}", description);
-        return new SendMessage(chatId.toString(), messageService.get("bot.info.userCreatedRootDescription"));
+        return new SendMessage(chatId.toString(), textService.get("bot.info.userCreatedRootDescription"));
     }
 
     @FSMRoute(ActionType.ROOT_BUTTON_CREATION)
