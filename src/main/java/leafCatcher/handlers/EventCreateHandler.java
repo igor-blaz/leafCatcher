@@ -34,11 +34,12 @@ public class EventCreateHandler extends AbstractFsmHandler {
     //Этот метод вызывается кнопкой написать продолжение
     @FSMRoute(ActionType.CHILD_DESCRIPTION_AWAIT)
     public SendMessage handleAwaitDescription(Update update, Long chatId, Long userId) {
+        //1. Информируем, что нет продолжения. Переводим в состояние создания кнопки
 
-        historyService.setState(chatId, ActionType.CHILD_DESCRIPTION_CREATION);
+        historyService.setState(chatId, ActionType.CHILD_BUTTON_CREATION);
         return new SendMessage(
                 chatId.toString(),
-                "Хорошо 🌿 Напиши, что произойдёт дальше ✨"
+                "Хорошо 🌿 Озаглавь следующее событие ✨"
         );
     }
 
@@ -54,8 +55,17 @@ public class EventCreateHandler extends AbstractFsmHandler {
         }
         String description = update.getMessage().getText();
         draftService.setChildDescription(userId, description);
-        historyService.setState(chatId, ActionType.CHILD_BUTTON_CREATION);
-        log.info("description {}", description);
+        String buttonName = draftService.getChildButtonName(userId);
+        Event parent = historyService.getCurrentEvent(userId);
+        if (parent == null) {
+            return new SendMessage(chatId.toString(),
+                    "Не могу создать кнопку: не найден родительский лист 🥲");
+        }
+        Event child = EventMapper.makeEvent(update, description, buttonName, false);
+        child = eventStorage.saveChild(parent.getElementId(), child);
+        historyService.setCurrentEvent(userId, child);
+        historyService.setAttemptsToExecute(chatId, 2);
+        historyService.setState(chatId, ActionType.BACK_OR_FORWARD_QUESTION);
         return new SendMessage(
                 chatId.toString(),
                 textService.get("bot.info.userCreatedChildDescription")
@@ -71,21 +81,11 @@ public class EventCreateHandler extends AbstractFsmHandler {
         if (!hasText(update)) {
             return wrongInput(chatId, "текст описания события");
         }
-        log.warn("button Creation");
         String buttonName = update.getMessage().getText();
-        String description = draftService.getChildDescription(userId);
-        Event parent = historyService.getCurrentEvent(userId);
-        if (parent == null) {
-            return new SendMessage(chatId.toString(),
-                    "Не могу создать кнопку: не найден родительский лист 🥲");
-        }
-        Event child = EventMapper.makeEvent(update, description, buttonName, false);
-        child = eventStorage.saveChild(parent.getElementId(), child);
-        historyService.setCurrentEvent(chatId, child);
-        historyService.setAttemptsToExecute(chatId, 2);
-        historyService.setState(chatId, ActionType.BACK_OR_FORWARD_QUESTION);
+        draftService.setChildButtonName(userId, buttonName);
+        historyService.setState(chatId, ActionType.CHILD_DESCRIPTION_CREATION);
         return new SendMessage(chatId.toString(),
-                "Отлично! Кнопка будет называться " + buttonName);
+                "Отлично! Кнопка будет называться " + buttonName + " теперь напиши событие 🪶");
     }
 
 

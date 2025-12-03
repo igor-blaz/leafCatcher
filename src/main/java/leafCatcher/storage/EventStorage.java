@@ -15,6 +15,10 @@ import java.util.Optional;
 public class EventStorage {
     private final EventRepository repository;
 
+    public void deleteById(String elementId){
+        repository.deleteById(elementId);
+    }
+
     public Event getRootEvent() {
         return repository.getRoot();
     }

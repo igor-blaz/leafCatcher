@@ -19,11 +19,19 @@ public class ButtonFactory {
     private static final String RANDOM = "🧨 Случайное событие";
     private static final String PUT_IN_MEMORY = "🧠 Запомнить";
     private static final String BOND = "🔗 Связать с памятью";
+    private static final String DELETE = "🗑️ Удалить";
 
     public InlineKeyboardButton createRandomButton() {
         return InlineKeyboardButton.builder()
                 .text(RANDOM)
                 .callbackData(ActionType.RANDOM.toString())
+                .build();
+    }
+
+    public InlineKeyboardButton createDeleteButton() {
+        return InlineKeyboardButton.builder()
+                .text(DELETE)
+                .callbackData(ActionType.DELETE.toString())
                 .build();
     }
 

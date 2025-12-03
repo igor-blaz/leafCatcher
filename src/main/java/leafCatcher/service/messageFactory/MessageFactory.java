@@ -5,11 +5,13 @@ import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
 import leafCatcher.utilityClasses.ButtonRowDesign;
+import leafCatcher.utilityClasses.GetTelegramUserName;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -39,15 +41,16 @@ public class MessageFactory {
         InlineKeyboardButton iWantWriteEnding = ButtonFactory.createWriteEndButton();
         InlineKeyboardButton insertFromMemory = ButtonFactory.createBondButton();
         InlineKeyboardButton putInMemory = ButtonFactory.createPutInMemoryButton();
+        InlineKeyboardButton delete = ButtonFactory.createDeleteButton();
 
-        List<InlineKeyboardRow> row = ButtonRowDesign.squareRow2x2PlusOne(iWant, iDontWant,
-                iWantWriteEnding, putInMemory, insertFromMemory);
+        List<InlineKeyboardRow> row = ButtonRowDesign.rowsBy2(iWant, iDontWant,
+                iWantWriteEnding, putInMemory, insertFromMemory, delete);
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(row);
         return makeMessage(chatId, markup, event.getDescription());
     }
 
-    public SendMessage makeQuestionMessage(Long chatId, Long userId) {
+    public SendMessage makeQuestionMessage(Update update, Long chatId, Long userId) {
         InlineKeyboardButton goBack = ButtonFactory.createGoBackButton();
         InlineKeyboardButton goNext = ButtonFactory.createGoNextButton();
         InlineKeyboardRow row = new InlineKeyboardRow();
@@ -58,11 +61,12 @@ public class MessageFactory {
         row.add(ButtonFactory.createIDontKnowButton());
         List<InlineKeyboardRow> keyboard = List.of(row);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboard);
+        String name = GetTelegramUserName.getName(update);
 
-        return makeMessage(chatId, markup, "Куда пойдем дальше? ");
+        return makeMessage(chatId, markup, name + " ,куда пойдем дальше? ");
     }
 
-    public SendMessage makeAfterEndMessage(Long chatId, Long userId) {
+    public SendMessage makeAfterEndMessage(Update update, Long chatId, Long userId) {
         InlineKeyboardButton credits = ButtonFactory.createCreditsButton();
         InlineKeyboardButton goToStart = ButtonFactory.createStartButton();
         InlineKeyboardButton back = ButtonFactory.createGoBackButton();
@@ -71,7 +75,9 @@ public class MessageFactory {
         List<InlineKeyboardRow> keyboardRows = ButtonRowDesign.squareRow2x2PlusOne(goToStart,
                 back, random, putInMemory, credits);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboardRows);
-        return makeMessage(chatId, markup, "Поздравляю, вы прошли игру");
+        String name = GetTelegramUserName.getName(update);
+        return makeMessage(chatId, markup,
+                name + " поздравляю, тебе удалось дойти до конца");
     }
 
     public SendMessage makeTextMessage(Long chatId, String text) {

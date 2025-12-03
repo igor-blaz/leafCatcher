@@ -29,29 +29,11 @@ public class EndingHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.END_IS_ABSENCE_INFO)
     public SendMessage handleNoEndInfo(Update update, Long chatId, Long userId) {
-        historyService.setState(chatId, ActionType.ENDING_DESCRIPTION_CREATION);
+        //1. Уведомляем, что концовки нет. Переходим в состояние создания кнопки
+        historyService.setState(chatId, ActionType.ENDING_BUTTON_CREATION);
         return new SendMessage(
                 chatId.toString(),
                 textService.get("bot.info.userWantsCreateEnd")
-        );
-    }
-
-    @FSMRoute(ActionType.ENDING_DESCRIPTION_CREATION)
-    public SendMessage handleEndDescription(Update update, Long chatId, Long userId) {
-        SendMessage reject = rejectCallbackWhenExpectingText(update, chatId, "текст описания события");
-        if (reject != null) {
-            return reject;
-        }
-        if (!hasText(update)) {
-            return wrongInput(chatId, "текст описания события");
-        }
-        String description = update.getMessage().getText();
-        draftService.setDraftEndingDescription(userId, description);
-        historyService.setState(chatId, ActionType.ENDING_BUTTON_CREATION);
-        historyService.setAttemptsToExecute(userId, 0);
-        return new SendMessage(
-                chatId.toString(),
-                textService.get("bot.info.userCreatedEndingDescription")
         );
     }
 
@@ -64,8 +46,28 @@ public class EndingHandler extends AbstractFsmHandler {
         if (!hasText(update)) {
             return wrongInput(chatId, "текст описания события");
         }
-        String buttonName = update.getMessage().getText();
-        String description = draftService.getEndingDescription(userId);
+
+        String button = update.getMessage().getText();
+        draftService.setEndingButtonName(userId, button);
+        historyService.setState(chatId, ActionType.ENDING_DESCRIPTION_CREATION);
+
+        return new SendMessage(chatId.toString(),
+                textService.get("bot.info.endingButtonCreation"));
+    }
+
+    @FSMRoute(ActionType.ENDING_DESCRIPTION_CREATION)
+    public SendMessage handleEndDescription(Update update, Long chatId, Long userId) {
+        SendMessage reject = rejectCallbackWhenExpectingText(update, chatId, "текст описания события");
+        if (reject != null) {
+            return reject;
+        }
+        if (!hasText(update)) {
+            return wrongInput(chatId, "текст описания события");
+        }
+
+
+        String description = update.getMessage().getText();
+        String buttonName = draftService.getEndingButtonName(userId);
         Event parent = historyService.getCurrentEvent(userId);
         if (parent == null) {
             return new SendMessage(chatId.toString(),
@@ -76,14 +78,15 @@ public class EndingHandler extends AbstractFsmHandler {
         historyService.setCurrentEvent(chatId, ending);
         historyService.setAttemptsToExecute(chatId, 2);
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
-
-        return new SendMessage(chatId.toString(),
-                textService.get("bot.info.endingButtonCreation"));
+        return new SendMessage(
+                chatId.toString(),
+                textService.get("bot.info.userCreatedEndingDescription")
+        );
     }
+
 
     @FSMRoute(ActionType.GET_ENDING)
     public SendMessage handleGetEnding(Update update, Long chatId, Long userId) {
-        log.info("GETEND&&&&&");
         if (!hasCallback(update)) {
             return wrongInput(chatId, "Нужно нажать кнопку");
         }
@@ -96,7 +99,7 @@ public class EndingHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.AFTER_END_CHOICE)
     public SendMessage handleAfterParty(Update update, Long chatId, Long userId) {
         log.info("AFTER_PARTY💎🔥");
-        return messageFactory.makeAfterEndMessage(chatId, userId);
+        return messageFactory.makeAfterEndMessage(update, chatId, userId);
     }
 
 

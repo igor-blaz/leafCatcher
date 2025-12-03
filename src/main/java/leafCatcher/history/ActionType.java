@@ -25,6 +25,7 @@ public enum ActionType {
 
     PUT_IN_MEMORY,
     BOND,
+    DELETE,
 
     END_IS_ABSENCE_INFO,
     GET_ENDING,

@@ -11,6 +11,8 @@ public class DraftService {
     private final Map<Long, Draft> drafts = new ConcurrentHashMap<>();
     static final String DESCRIPTION_NOT_FOUND = "☹️ Извините, но описание для этого события отсутствует." +
             " Попробуйте пересоздать";
+    static final String BUTTON_NAME_NOT_FOUND = "☹️ Извините, но текст кнопки для этого события отсутствует." +
+            " Попробуйте пересоздать";
     static final String END_DESCRIPTION_NOT_FOUND = "☹️ Извините, у этой концовки нет описания. Попробуйте пересоздать";
 
     private Draft getOrCreate(Long userId) {
@@ -42,6 +44,14 @@ public class DraftService {
         return END_DESCRIPTION_NOT_FOUND;
     }
 
+    public String getEndingButtonName(Long userId) {
+        Draft draft = drafts.get(userId);
+        if (draft != null) {
+            return draft.getEndButtonName();
+        }
+        return END_DESCRIPTION_NOT_FOUND;
+    }
+
     //Корень
     public void setRootDescription(Long userId, String text) {
         getOrCreate(userId).setRootDescription(text);
@@ -67,6 +77,13 @@ public class DraftService {
             return draft.getChildDescription();
         }
         return DESCRIPTION_NOT_FOUND;
+    }
+    public String getChildButtonName(Long userId) {
+        Draft draft = drafts.get(userId);
+        if (draft != null) {
+            return draft.getChildButtonName();
+        }
+        return BUTTON_NAME_NOT_FOUND;
     }
 
     public void incDepth(Long userId) {
