@@ -5,7 +5,7 @@ import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -26,9 +26,9 @@ public class StartHandler extends AbstractFsmHandler {
             , MessageFactory messageFactory,
                         MarkupFactory markupFactory,
                         EventStorage eventStorage,
-                        MessageService messageService,
+                        TextService textService,
                         DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, messageService, draftService);
+        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
     }
 
     @FSMRoute(ActionType.START)
@@ -60,7 +60,7 @@ public class StartHandler extends AbstractFsmHandler {
         historyService.setSkipStart(userId);
         historyService.setState(chatId, ActionType.START);
         historyService.setAttemptsToExecute(userId, 2);
-        String text = messageService.getMarkdown("ru.bot.info.intro");
+        String text = textService.getMarkdown("ru.bot.info.intro");
         return messageFactory.makeTextMessage(chatId, text);
     }
 

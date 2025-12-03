@@ -4,7 +4,7 @@ import leafCatcher.history.ActionType;
 import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -23,16 +23,16 @@ public class CreditsHandler extends AbstractFsmHandler {
                           MessageFactory messageFactory,
                           MarkupFactory markupFactory,
                           EventStorage eventStorage,
-                          MessageService messageService,
+                          TextService textService,
                           DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, messageService, draftService);
+        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
     }
 
     @FSMRoute(ActionType.CREDITS)
     public SendMessage handleAfterParty(Update update, Long chatId, Long userId) {
         historyService.setAttemptsToExecute(userId, 2);
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
-        String credits = messageService.getMarkdown("ru.bot.info.credits");
+        String credits = textService.getMarkdown("ru.bot.info.credits");
         return messageFactory.makeTextMessage(chatId, credits);
     }
 }

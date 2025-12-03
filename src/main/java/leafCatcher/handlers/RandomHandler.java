@@ -5,7 +5,7 @@ import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -20,8 +20,8 @@ import java.util.List;
 @Slf4j
 @Component
 public class RandomHandler extends AbstractFsmHandler {
-    public RandomHandler(HistoryService historyService, MessageFactory messageFactory, MarkupFactory markupFactory, EventStorage eventStorage, MessageService messageService, DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, messageService, draftService);
+    public RandomHandler(HistoryService historyService, MessageFactory messageFactory, MarkupFactory markupFactory, EventStorage eventStorage, TextService textService, DraftService draftService) {
+        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
     }
 
     @FSMRoute(ActionType.RANDOM)

@@ -3,7 +3,7 @@ package leafCatcher.handlers;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.DraftService;
 import leafCatcher.history.HistoryService;
-import leafCatcher.service.MessageService;
+import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -26,7 +26,7 @@ public abstract class AbstractFsmHandler {
     protected final MessageFactory messageFactory;
     protected final MarkupFactory markupFactory;
     protected final EventStorage eventStorage;
-    protected final MessageService messageService;
+    protected final TextService textService;
     protected final DraftService draftService;
 
     protected boolean hasText(Update update) {

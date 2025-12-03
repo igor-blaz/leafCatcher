@@ -1,5 +1,7 @@
 package leafCatcher.utilityClasses;
 
+import leafCatcher.history.ActionType;
+import leafCatcher.history.HistoryService;
 import lombok.experimental.UtilityClass;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
