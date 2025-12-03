@@ -9,7 +9,13 @@ import java.util.Objects;
 public class GetTelegramUserName {
 
     public static String getName(Update update) {
-        String username = update.getMessage().getFrom().getUserName();
-        return Objects.requireNonNullElse(username, "Игрок");
+        if (update.hasMessage() && update.getMessage().getFrom() != null) {
+            return update.getMessage().getFrom().getUserName();
+        }
+        if (update.hasCallbackQuery() && update.getCallbackQuery().getFrom() != null) {
+            return update.getCallbackQuery().getFrom().getUserName();
+        }
+        return " Игрок💖 ";
     }
+
 }

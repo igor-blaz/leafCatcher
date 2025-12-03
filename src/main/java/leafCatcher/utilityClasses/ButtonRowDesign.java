@@ -50,6 +50,7 @@ public class ButtonRowDesign {
         return rows;
     }
 
+
     public List<InlineKeyboardRow> squareRow2x2PlusOne(InlineKeyboardButton button1,
                                                        InlineKeyboardButton button2,
                                                        InlineKeyboardButton button3,
@@ -70,6 +71,25 @@ public class ButtonRowDesign {
         rows.addAll(oneHorizontalRow(button6));
         return rows;
     }
+
+    public List<InlineKeyboardRow> rowsBy2(InlineKeyboardButton... buttons) {
+        List<InlineKeyboardRow> rows = new ArrayList<>();
+
+        for (int i = 0; i < buttons.length; i += 2) {
+            InlineKeyboardRow row = new InlineKeyboardRow();
+
+            row.add(buttons[i]);
+
+            if (i + 1 < buttons.length) {
+                row.add(buttons[i + 1]);
+            }
+
+            rows.add(row);
+        }
+
+        return rows;
+    }
+
 
     public List<InlineKeyboardRow> twoOnTopOneBottom(InlineKeyboardButton button1,
                                                      InlineKeyboardButton button2,

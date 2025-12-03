@@ -9,11 +9,14 @@ import leafCatcher.service.TextService;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
+import leafCatcher.utilityClasses.GetTelegramUserName;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+
+import java.util.List;
 
 @Component
 @Slf4j
@@ -30,7 +33,7 @@ public class QuestionHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.BACK_OR_FORWARD_QUESTION)
     public SendMessage handleRootButton(Update update, Long chatId, Long userId) {
-        return messageFactory.makeQuestionMessage(chatId, userId);
+        return messageFactory.makeQuestionMessage(update, chatId, userId);
     }
 
     @FSMRoute(ActionType.WRITE_NEXT_QUESTION)
@@ -45,6 +48,33 @@ public class QuestionHandler extends AbstractFsmHandler {
         int size = eventStorage.getChildren(current.getElementId()).size();
         InlineKeyboardMarkup markup = markupFactory.makeActionMarkup(size, userId, current);
         return messageFactory.makeMessage(chatId, markup, "Вот действия");
+    }
+
+    @FSMRoute(ActionType.DELETE)
+    public SendMessage handleDeleteEvent(Update update, Long chatId, Long userId) {
+        log.info("Dleete handler");
+        Event currentEventForDelete = historyService.getCurrentEvent(userId);
+        List<Event> childList = eventStorage.getChildren(currentEventForDelete.getElementId());
+        String name = GetTelegramUserName.getName(update);
+        historyService.setAttemptsToExecute(userId, 2);
+        if (!childList.isEmpty()) {
+            log.info("Current {}", historyService.getCurrentEvent(userId));
+            return messageFactory.makeTextMessage(chatId, name + " вы можете удалять только те события, у которых нет дочерних событий☹️");
+        } else if (!name.equals(currentEventForDelete.getAuthor())) {
+            return messageFactory.makeTextMessage(chatId, name + " можно удалять только те события, которые создали вы." +
+                    " У этого события другой автор");
+        }
+        Event parent = eventStorage.getParent(currentEventForDelete.getElementId());
+        if (parent == null) {
+
+            return messageFactory.makeTextMessage(chatId, name + " у этого события нет родительского." +
+                    " Ошибка. Нажмите /start");
+        }
+        historyService.setCurrentEvent(userId, parent);
+        historyService.setState(chatId, ActionType.REPEAT_CURRENT);
+
+        eventStorage.deleteById(currentEventForDelete.getElementId());
+        return messageFactory.makeTextMessage(chatId, "Отлично, событие удалено🔥");
     }
 
 

@@ -32,35 +32,38 @@ public class RootCreateHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.ROOT_IS_ABSENCE_INFO)
     public SendMessage handleRootNotification(Update update, Long chatId, Long userId) {
         log.info("Root is absence");
-        historyService.setState(chatId, ActionType.ROOT_DESCRIPTION_CREATION);
-        return new SendMessage(chatId.toString(), textService.get("bot.info.thereIsNoRoot"));
-    }
-
-    @FSMRoute(ActionType.ROOT_DESCRIPTION_CREATION)
-    public SendMessage handleRootDescription(Update update, Long chatId, Long userId) {
-        String description = update.getMessage().getText();
-        draftService.setRootDescription(userId, description);
+        //1. Проинформировали, что нет корневого события. Переводим в состояние создания кнопки
         historyService.setState(chatId, ActionType.ROOT_BUTTON_CREATION);
-        log.info("description {}", description);
-        return new SendMessage(chatId.toString(), textService.get("bot.info.userCreatedRootDescription"));
+        return new SendMessage(chatId.toString(), textService.get("bot.info.thereIsNoRoot"));
     }
 
     @FSMRoute(ActionType.ROOT_BUTTON_CREATION)
     public SendMessage handleRootButton(Update update, Long chatId, Long userId) {
-        log.info("Создание кнопки  для корневого события ");
+        //2. Создаем кнопку. Переводим в состояние создания описания
         String buttonName = update.getMessage().getText();
-
         draftService.setRootButtonName(userId, buttonName);
+        historyService.setState(chatId, ActionType.ROOT_DESCRIPTION_CREATION);
+        return new SendMessage(chatId.toString(), "Отлично! Кнопка будет называться " + buttonName +
+                " теперь ты можешь написать событие");
+    }
+
+    @FSMRoute(ActionType.ROOT_DESCRIPTION_CREATION)
+    public SendMessage handleRootDescription(Update update, Long chatId, Long userId) {
+        //3. Создаем описание. Переводим в состояние Вперед или назад.
+        String description = update.getMessage().getText();
+        draftService.setRootDescription(userId, description);
+
         Draft draft = draftService.get(userId);
-        log.info("ButtonName {}", buttonName);
-        Event event = EventMapper.makeRoot(update, draft.getRootDescription(), buttonName);
+        Event event = EventMapper.makeRoot(update, description, draft.getRootButtonName());
         eventStorage.saveEvent(event);
-        log.info("Event {}", event);
         historyService.setCurrentEvent(userId, event);
         historyService.setState(chatId, ActionType.BACK_OR_FORWARD_QUESTION);
         historyService.setAttemptsToExecute(userId, 2);
-        return new SendMessage(chatId.toString(), "Отлично! Кнопка будет называться " + buttonName);
+
+
+        return new SendMessage(chatId.toString(), textService.get("bot.info.userCreatedRootDescription"));
     }
+
 
     @FSMRoute(ActionType.GET_ROOT)
     public SendMessage handleGetRoot(Update update, Long chatId, Long userId) {

@@ -17,6 +17,7 @@ import java.util.UUID;
 public class Event {
     @Id
     private String elementId = UUID.randomUUID().toString();
+
     private Long telegramId;
     private Integer updateId;
     private String description;
