@@ -3,6 +3,8 @@ package leafCatcher.handlers;
 import leafCatcher.history.*;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -30,25 +32,27 @@ public class RootCreateHandler extends AbstractFsmHandler {
     }
 
     @FSMRoute(ActionType.ROOT_IS_ABSENCE_INFO)
-    public SendMessage handleRootNotification(Update update, Long chatId, Long userId) {
+    public BotMessage handleRootNotification(Update update, Long chatId, Long userId) {
         log.info("Root is absence");
         //1. Проинформировали, что нет корневого события. Переводим в состояние создания кнопки
         historyService.setState(chatId, ActionType.ROOT_BUTTON_CREATION);
-        return new SendMessage(chatId.toString(), textService.get("bot.info.thereIsNoRoot"));
+        SendMessage sendMessage = new SendMessage(chatId.toString(), textService.get("bot.info.thereIsNoRoot"));
+        return new BotMessage(sendMessage, DeleteStrategy.NONE);
     }
 
     @FSMRoute(ActionType.ROOT_BUTTON_CREATION)
-    public SendMessage handleRootButton(Update update, Long chatId, Long userId) {
+    public BotMessage handleRootButton(Update update, Long chatId, Long userId) {
         //2. Создаем кнопку. Переводим в состояние создания описания
         String buttonName = update.getMessage().getText();
         draftService.setRootButtonName(userId, buttonName);
         historyService.setState(chatId, ActionType.ROOT_DESCRIPTION_CREATION);
-        return new SendMessage(chatId.toString(), "Отлично! Кнопка будет называться " + buttonName +
+        SendMessage sendMessage = new SendMessage(chatId.toString(), "Отлично! Кнопка будет называться " + buttonName +
                 " теперь ты можешь написать событие");
+        return new BotMessage(sendMessage, DeleteStrategy.NONE);
     }
 
     @FSMRoute(ActionType.ROOT_DESCRIPTION_CREATION)
-    public SendMessage handleRootDescription(Update update, Long chatId, Long userId) {
+    public BotMessage handleRootDescription(Update update, Long chatId, Long userId) {
         //3. Создаем описание. Переводим в состояние Вперед или назад.
         String description = update.getMessage().getText();
         draftService.setRootDescription(userId, description);
@@ -61,12 +65,13 @@ public class RootCreateHandler extends AbstractFsmHandler {
         historyService.setAttemptsToExecute(userId, 2);
 
 
-        return new SendMessage(chatId.toString(), textService.get("bot.info.userCreatedRootDescription"));
+        SendMessage sendMessage = new SendMessage(chatId.toString(), textService.get("bot.info.userCreatedRootDescription"));
+        return new BotMessage(sendMessage, DeleteStrategy.NONE);
     }
 
 
     @FSMRoute(ActionType.GET_ROOT)
-    public SendMessage handleGetRoot(Update update, Long chatId, Long userId) {
+    public BotMessage handleGetRoot(Update update, Long chatId, Long userId) {
         Event root = eventStorage.getRootEvent();
         if (root == null) {
             log.info("root is null again");
@@ -77,6 +82,6 @@ public class RootCreateHandler extends AbstractFsmHandler {
         historyService.setState(chatId, ActionType.CHILD_DESCRIPTION_AWAIT);
         historyService.setAttemptsToExecute(userId, 2);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(List.of(root), userId);
-        return messageFactory.makeMessage(chatId, markup, root.getDescription());
+        return messageFactory.makeMessage(chatId, markup, root.getDescription(), DeleteStrategy.NONE);
     }
 }

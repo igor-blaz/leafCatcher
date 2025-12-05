@@ -5,6 +5,8 @@ import leafCatcher.history.DraftService;
 import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.service.TextService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -29,7 +31,7 @@ public class WarningHandler extends AbstractFsmHandler {
     }
 
     @FSMRoute(ActionType.ADMIN_MODE)
-    public SendMessage adminMode(Update update, Long chatId, Long userId) {
+    public BotMessage adminMode(Update update, Long chatId, Long userId) {
         log.info("AdminMode method");
         if (update.getMessage().getText().equals(super.adminCleanDb)) {
             eventStorage.killThemAll();
@@ -37,7 +39,8 @@ public class WarningHandler extends AbstractFsmHandler {
             historyService.setAttemptsToExecute(userId, 2);
             log.info("🔥🔥🔥🔥 База данных удалена ");
 
-            return new SendMessage(chatId.toString(), "💎💎💎Привет, Админ. База данных очищена");
+            SendMessage sendMessage = new SendMessage(chatId.toString(), "💎💎💎Привет, Админ. База данных очищена");
+            return new BotMessage(sendMessage, DeleteStrategy.NONE);
         }
         return null;
     }

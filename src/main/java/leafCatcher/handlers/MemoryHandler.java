@@ -6,12 +6,13 @@ import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
@@ -27,36 +28,45 @@ public class MemoryHandler extends AbstractFsmHandler {
     }
 
     @FSMRoute(ActionType.PUT_IN_MEMORY)
-    public SendMessage putInMemory(Update update, Long chatId, Long userId) {
+    public BotMessage putInMemory(Update update, Long chatId, Long userId) {
         log.info("Put in memory");
         historyService.setState(chatId, ActionType.REPEAT_CURRENT);
         historyService.setAttemptsToExecute(userId, 2);
         Event current = historyService.getCurrentEvent(userId);
         if (current == null) {
-            return messageFactory.makeTextMessage(chatId, "Сейчас нет события, которое можно запомнить.");
+            return messageFactory.makeTextMessage(chatId,
+                    "Сейчас нет события, которое можно запомнить.",
+                    DeleteStrategy.NONE);
         }
 
         historyService.addInMemory(userId, current);
         return messageFactory.makeTextMessage(chatId,
-                "Отлично, событие " + current.getShortName() + " сохранено");
+                "Отлично, событие " + current.getShortName() + " сохранено",
+                DeleteStrategy.NONE);
     }
 
     @FSMRoute(ActionType.BOND)
-    public SendMessage showMemory(Update update, Long chatId, Long userId) {
+    public BotMessage showMemory(Update update, Long chatId, Long userId) {
         log.info("Show memory");
         historyService.setAttemptsToExecute(userId, 2);
         Event memoryEvent = historyService.showMemory(userId);
         if (memoryEvent == null) {
-            return messageFactory.makeTextMessage(chatId, "У вас в памяти ноль событий");
+            return messageFactory.makeTextMessage(chatId,
+                    "У вас в памяти ноль событий",
+                    DeleteStrategy.NONE);
         }
 
         Event parent = historyService.getCurrentEvent(userId);
         if (parent == null) {
-            return messageFactory.makeTextMessage(chatId, "Сейчас нет события, к которому можно привязать память.");
+            return messageFactory.makeTextMessage(chatId,
+                    "Сейчас нет события, к которому можно привязать память.",
+                    DeleteStrategy.NONE);
         }
 
         if (parent.getElementId().equals(memoryEvent.getElementId())) {
-            return messageFactory.makeTextMessage(chatId, "Нельзя привязать событие само к себе 🙂");
+            return messageFactory.makeTextMessage(chatId,
+                    "Нельзя привязать событие само к себе 🙂",
+                    DeleteStrategy.NONE);
         }
 
         eventStorage.saveChildNoBack(parent.getElementId(), memoryEvent);
@@ -64,7 +74,8 @@ public class MemoryHandler extends AbstractFsmHandler {
         return messageFactory.makeTextMessage(
                 chatId,
                 "Отлично. Получилось событие привязать: " + memoryEvent.getShortName() +
-                        "к событию " + parent.getShortName()
+                        "к событию " + parent.getShortName(),
+                DeleteStrategy.NONE
         );
     }
 

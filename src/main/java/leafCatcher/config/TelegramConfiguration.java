@@ -3,6 +3,7 @@ package leafCatcher.config;
 import leafCatcher.LeafCatcher;
 import leafCatcher.history.HistoryService;
 import leafCatcher.service.EventMainService;
+import leafCatcher.service.deleteStrategy.DeleteMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
@@ -40,8 +41,14 @@ public class TelegramConfiguration {
 
     @Bean
     public LeafCatcher leafCatcher(TelegramClient telegramClient,
-                                   EventMainService eventMainService, HistoryService historyService) {
-        return new LeafCatcher(telegramClient, eventMainService, historyService, adminCleanDb);
+                                   EventMainService eventMainService,
+                                   HistoryService historyService,
+                                   DeleteMessageService deleteMessageService) {
+        return new LeafCatcher(telegramClient,
+                eventMainService,
+                historyService,
+                deleteMessageService,
+                adminCleanDb);
     }
 
     @Bean

@@ -6,6 +6,8 @@ import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -32,26 +34,26 @@ public class QuestionHandler extends AbstractFsmHandler {
     }
 
     @FSMRoute(ActionType.BACK_OR_FORWARD_QUESTION)
-    public SendMessage handleRootButton(Update update, Long chatId, Long userId) {
-        return messageFactory.makeQuestionMessage(update, chatId, userId);
+    public BotMessage handleRootButton(Update update, Long chatId, Long userId) {
+        return messageFactory.makeQuestionMessage(update, chatId, userId, DeleteStrategy.NONE);
     }
 
     @FSMRoute(ActionType.WRITE_NEXT_QUESTION)
-    public SendMessage handleEventNotification(Update update, Long chatId, Long userId) {
+    public BotMessage handleEventNotification(Update update, Long chatId, Long userId) {
         Event current = historyService.getCurrentEvent(userId);
-        return messageFactory.makeWriteOrNotMessage(chatId, current);
+        return messageFactory.makeWriteOrNotMessage(chatId, current, DeleteStrategy.NONE);
     }
 
     @FSMRoute(ActionType.DO_ACTION)
-    public SendMessage handleDoAction(Update update, Long chatId, Long userId) {
+    public BotMessage handleDoAction(Update update, Long chatId, Long userId) {
         Event current = historyService.getCurrentEvent(userId);
         int size = eventStorage.getChildren(current.getElementId()).size();
         InlineKeyboardMarkup markup = markupFactory.makeActionMarkup(size, userId, current);
-        return messageFactory.makeMessage(chatId, markup, "Вот действия");
+        return messageFactory.makeMessage(chatId, markup, "Вот действия", DeleteStrategy.NONE);
     }
 
     @FSMRoute(ActionType.DELETE)
-    public SendMessage handleDeleteEvent(Update update, Long chatId, Long userId) {
+    public BotMessage handleDeleteEvent(Update update, Long chatId, Long userId) {
         log.info("Dleete handler");
         Event currentEventForDelete = historyService.getCurrentEvent(userId);
         List<Event> childList = eventStorage.getChildren(currentEventForDelete.getElementId());
@@ -59,22 +61,24 @@ public class QuestionHandler extends AbstractFsmHandler {
         historyService.setAttemptsToExecute(userId, 2);
         if (!childList.isEmpty()) {
             log.info("Current {}", historyService.getCurrentEvent(userId));
-            return messageFactory.makeTextMessage(chatId, name + " вы можете удалять только те события, у которых нет дочерних событий☹️");
+            return messageFactory.makeTextMessage(chatId,
+                    name + " вы можете удалять только те события, у которых нет дочерних событий☹️",
+                    DeleteStrategy.NONE);
         } else if (!name.equals(currentEventForDelete.getAuthor())) {
             return messageFactory.makeTextMessage(chatId, name + " можно удалять только те события, которые создали вы." +
-                    " У этого события другой автор");
+                    " У этого события другой автор", DeleteStrategy.NONE);
         }
         Event parent = eventStorage.getParent(currentEventForDelete.getElementId());
         if (parent == null) {
 
             return messageFactory.makeTextMessage(chatId, name + " у этого события нет родительского." +
-                    " Ошибка. Нажмите /start");
+                    " Ошибка. Нажмите /start", DeleteStrategy.NONE);
         }
         historyService.setCurrentEvent(userId, parent);
         historyService.setState(chatId, ActionType.REPEAT_CURRENT);
 
         eventStorage.deleteById(currentEventForDelete.getElementId());
-        return messageFactory.makeTextMessage(chatId, "Отлично, событие удалено🔥");
+        return messageFactory.makeTextMessage(chatId, "Отлично, событие удалено🔥", DeleteStrategy.NONE);
     }
 
 

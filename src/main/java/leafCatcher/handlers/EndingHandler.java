@@ -6,6 +6,8 @@ import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -28,41 +30,42 @@ public class EndingHandler extends AbstractFsmHandler {
     }
 
     @FSMRoute(ActionType.END_IS_ABSENCE_INFO)
-    public SendMessage handleNoEndInfo(Update update, Long chatId, Long userId) {
+    public BotMessage handleNoEndInfo(Update update, Long chatId, Long userId) {
         //1. Уведомляем, что концовки нет. Переходим в состояние создания кнопки
         historyService.setState(chatId, ActionType.ENDING_BUTTON_CREATION);
-        return new SendMessage(
+        SendMessage sendMessage = new SendMessage(
                 chatId.toString(),
                 textService.get("bot.info.userWantsCreateEnd")
         );
+        return new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT);
     }
 
     @FSMRoute(ActionType.ENDING_BUTTON_CREATION)
-    public SendMessage handleRootButton(Update update, Long chatId, Long userId) {
+    public BotMessage handleRootButton(Update update, Long chatId, Long userId) {
         SendMessage reject = rejectCallbackWhenExpectingText(update, chatId, "текст описания события");
         if (reject != null) {
-            return reject;
+            return new BotMessage(reject, DeleteStrategy.NONE);
         }
         if (!hasText(update)) {
-            return wrongInput(chatId, "текст описания события");
+            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE);
         }
 
         String button = update.getMessage().getText();
         draftService.setEndingButtonName(userId, button);
         historyService.setState(chatId, ActionType.ENDING_DESCRIPTION_CREATION);
-
-        return new SendMessage(chatId.toString(),
-                textService.get("bot.info.endingButtonCreation"));
+        return messageFactory.makeTextMessage(chatId,
+                textService.get("bot.info.endingButtonCreation"),
+                DeleteStrategy.NONE);
     }
 
     @FSMRoute(ActionType.ENDING_DESCRIPTION_CREATION)
-    public SendMessage handleEndDescription(Update update, Long chatId, Long userId) {
+    public BotMessage handleEndDescription(Update update, Long chatId, Long userId) {
         SendMessage reject = rejectCallbackWhenExpectingText(update, chatId, "текст описания события");
         if (reject != null) {
-            return reject;
+            return new BotMessage(reject, DeleteStrategy.NONE);
         }
         if (!hasText(update)) {
-            return wrongInput(chatId, "текст описания события");
+            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE);
         }
 
 
@@ -70,36 +73,37 @@ public class EndingHandler extends AbstractFsmHandler {
         String buttonName = draftService.getEndingButtonName(userId);
         Event parent = historyService.getCurrentEvent(userId);
         if (parent == null) {
-            return new SendMessage(chatId.toString(),
-                    "Не могу создать кнопку: не найден родительский лист 🥲");
+            return messageFactory.makeTextMessage(chatId,
+                    "Не могу создать кнопку: не найден родительский лист 🥲",
+                    DeleteStrategy.NONE);
         }
         Event ending = EventMapper.makeEvent(update, description, buttonName, true);
         eventStorage.saveChild(parent.getElementId(), ending);
         historyService.setCurrentEvent(chatId, ending);
         historyService.setAttemptsToExecute(chatId, 2);
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
-        return new SendMessage(
-                chatId.toString(),
-                textService.get("bot.info.userCreatedEndingDescription")
-        );
+        return messageFactory.makeTextMessage(chatId,
+                textService.get("bot.info.userCreatedEndingDescription"),
+                DeleteStrategy.NONE);
     }
 
 
     @FSMRoute(ActionType.GET_ENDING)
-    public SendMessage handleGetEnding(Update update, Long chatId, Long userId) {
+    public BotMessage handleGetEnding(Update update, Long chatId, Long userId) {
         if (!hasCallback(update)) {
-            return wrongInput(chatId, "Нужно нажать кнопку");
+            return wrongInput(chatId, "Нужно нажать кнопку", DeleteStrategy.NONE);
         }
         Event ending = historyService.getCurrentEvent(userId);
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
-        return new SendMessage(chatId.toString(), ending.getDescription());
+        SendMessage sendMessage = new SendMessage(chatId.toString(), ending.getDescription());
+        return new BotMessage(sendMessage, DeleteStrategy.NONE);
     }
 
 
     @FSMRoute(ActionType.AFTER_END_CHOICE)
-    public SendMessage handleAfterParty(Update update, Long chatId, Long userId) {
+    public BotMessage handleAfterParty(Update update, Long chatId, Long userId) {
         log.info("AFTER_PARTY💎🔥");
-        return messageFactory.makeAfterEndMessage(update, chatId, userId);
+        return messageFactory.makeAfterEndMessage(update, chatId, userId, DeleteStrategy.NONE);
     }
 
 
