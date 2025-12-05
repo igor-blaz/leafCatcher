@@ -6,6 +6,8 @@ import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -25,7 +27,7 @@ public class RandomHandler extends AbstractFsmHandler {
     }
 
     @FSMRoute(ActionType.RANDOM)
-    public SendMessage handleEventNotification(Update update, Long chatId, Long userId) {
+    public BotMessage handleEventNotification(Update update, Long chatId, Long userId) {
         log.warn("RANDOM");
         Event parent = eventStorage.getRandom();
         if (parent == null) {
@@ -33,10 +35,10 @@ public class RandomHandler extends AbstractFsmHandler {
         }
         List<Event> children = eventStorage.getChildren(parent.getElementId());
         if (children == null || children.isEmpty()) {
-            return handleNoChildren(update, chatId, userId);
+            return handleNoChildren(update, chatId, userId, DeleteStrategy.NONE);
         }
         historyService.setState(chatId, ActionType.RANDOM);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
-        return messageFactory.makeMessage(chatId, markup, parent.getDescription());
+        return messageFactory.makeMessage(chatId, markup, parent.getDescription(), DeleteStrategy.NONE);
     }
 }

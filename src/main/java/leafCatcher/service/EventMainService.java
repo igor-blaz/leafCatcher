@@ -4,6 +4,8 @@ import leafCatcher.handlers.FSMDispatcher;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.storage.EventStorage;
 import leafCatcher.utilityClasses.Commands;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +28,7 @@ public class EventMainService {
     private String adminCleanDb;
 
     //Работает с текстами, которые написал пользователь
-    public SendMessage makeMessageByText(Update update, Long chatId, Long userId) {
+    public BotMessage makeMessageByText(Update update, Long chatId, Long userId) {
         ActionType actionType = historyService.getActualState(chatId);
         if (Commands.isStartCommand(update)) {
             historyService.setState(chatId, ActionType.START);
@@ -56,13 +58,15 @@ public class EventMainService {
      * @param userId идентификатор пользователя
      * @return сообщение для отправки пользователю
      */
-    public SendMessage makeMessageByCallback(Update update, Long chatId, Long userId) {
+    public BotMessage makeMessageByCallback(Update update, Long chatId, Long userId) {
         log.info("CALLBACK🔥");
         ActionType current = historyService.getActualState(chatId);
 
         if (isTextState(current) && !Commands.isStartCommand(update)) {
-            return new SendMessage(chatId.toString(),
+
+            SendMessage sendMessage = new SendMessage(chatId.toString(),
                     "Эта кнопка уже неактуальна 🙂\nСейчас я жду от тебя текст.");
+            return new BotMessage(sendMessage, DeleteStrategy.NONE);
         }
         String data = update.getCallbackQuery().getData();
         ActionType type;
@@ -76,7 +80,9 @@ public class EventMainService {
                 historyService.setCurrentEvent(userId, event);
                 return dispatch(ActionType.GET_CHILD, update, chatId, userId);
             } else {
-                return new SendMessage(chatId.toString(), "❌ Неизвестный callback: " + data);
+                SendMessage sendMessage = new SendMessage(chatId.toString(),
+                        "❌ Неизвестный callback: " + data);
+                return new BotMessage(sendMessage, DeleteStrategy.NONE);
             }
         }
     }
@@ -93,25 +99,23 @@ public class EventMainService {
         };
     }
 
-    private SendMessage dispatch(ActionType actionType,
-                                 Update update, Long chatId, Long userId) {
+    private BotMessage dispatch(ActionType actionType,
+                                Update update, Long chatId, Long userId) {
         ActionType takeAgainActionType;
         Object takeAgainResult;
 
         Object result = fsmDispatcher.dispatch(actionType, update, chatId, userId);
-        log.info("ActionType buttonservice {}", actionType);
-        if (result instanceof SendMessage sendMessage) {
-            log.info("Result {}", result);
+        if (result instanceof BotMessage sendMessage) {
+            return sendMessage;
+        }
+        takeAgainActionType = historyService.getActualState(chatId);
+        takeAgainResult = fsmDispatcher.dispatch(takeAgainActionType, update, chatId, userId);
+        if (takeAgainResult instanceof BotMessage sendMessage) {
             return sendMessage;
         }
 
-        takeAgainActionType = historyService.getActualState(chatId);
-        takeAgainResult = fsmDispatcher.dispatch(takeAgainActionType, update, chatId, userId);
-        if (takeAgainResult instanceof SendMessage sendMessage) {
-            log.info("TakeAgainResult {}", takeAgainResult);
-            return sendMessage;
-        }
-        return new SendMessage(chatId.toString(), "Ошибка");
+        SendMessage sendMessage = new SendMessage(chatId.toString(), "Ошибка");
+        return new BotMessage(sendMessage, DeleteStrategy.NONE);
     }
 
     //Проверка, String == UUID?

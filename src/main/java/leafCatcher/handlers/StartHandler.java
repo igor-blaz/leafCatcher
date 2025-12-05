@@ -6,6 +6,8 @@ import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -32,7 +34,7 @@ public class StartHandler extends AbstractFsmHandler {
     }
 
     @FSMRoute(ActionType.START)
-    public SendMessage handleStart(Update update, Long chatId, Long userId) {
+    public BotMessage handleStart(Update update, Long chatId, Long userId) {
         log.info("Start Handler");
         historyService.setZeroAttempts(userId);
         Event root = eventStorage.getRootEvent();
@@ -51,17 +53,17 @@ public class StartHandler extends AbstractFsmHandler {
         }
         log.info("children {}", children);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
-        return messageFactory.makeMessage(chatId, markup, root.getDescription());
+        return messageFactory.makeMessage(chatId, markup, root.getDescription(), DeleteStrategy.NONE);
     }
 
     @FSMRoute(ActionType.INTRO)
-    public SendMessage handleIntro(Update update, Long chatId, Long userId) {
+    public BotMessage handleIntro(Update update, Long chatId, Long userId) {
         log.info("Info Handler");
         historyService.setSkipStart(userId);
         historyService.setState(chatId, ActionType.START);
         historyService.setAttemptsToExecute(userId, 2);
         String text = textService.getMarkdown("ru.bot.info.intro");
-        return messageFactory.makeTextMessage(chatId, text);
+        return messageFactory.makeTextMessage(chatId, text, DeleteStrategy.NONE);
     }
 
 }

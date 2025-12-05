@@ -3,6 +3,10 @@ package leafCatcher;
 import leafCatcher.history.ActionType;
 import leafCatcher.history.HistoryService;
 import leafCatcher.service.EventMainService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteMessageService;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
+import leafCatcher.service.deleteStrategy.LastMessage;
 import leafCatcher.utilityClasses.GetUserIdOrChatId;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
@@ -20,6 +25,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
     private final EventMainService eventMainService;
     private final HistoryService historyService;
+    private final DeleteMessageService deleteMessageService;
 
     @Value("${admin.secret.command.cleanNeo4j}")
     private String adminCleanDb;
@@ -27,26 +33,28 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
 
     @Override
     public void consume(Update update) {
-        SendMessage sendMessage;
+        BotMessage botMessage;
         Long chatId = GetUserIdOrChatId.getChatId(update);
         Long userId = GetUserIdOrChatId.getUserId(update);
 
         if (update.hasMessage() && update.getMessage().hasText() &&
                 !update.hasCallbackQuery()) {
-            sendMessage = sendMessageByText(update, chatId, userId);
+            botMessage = sendMessageByText(update, chatId, userId);
 
         } else if (update.hasCallbackQuery()) {
-            sendMessage = sendMessageByCallback(update, chatId, userId);
+            botMessage = sendMessageByCallback(update, chatId, userId);
         } else {
-            sendMessage = new SendMessage(chatId.toString(), "Кажется, это ошибка");
+            SendMessage sendMessage = new SendMessage(chatId.toString(), "Кажется, это ошибка");
+            botMessage = new BotMessage(sendMessage, DeleteStrategy.NONE);
+
         }
         ActionType state = historyService.getActualState(chatId);
         log.warn("🥵consume {}", state);
-        executeMessage(sendMessage);
+        executeMessage(botMessage, chatId);
         repeatConsume(update, chatId, userId);
     }
 
-    private SendMessage sendMessageByText(Update update, Long chatId, Long userId) {
+    private BotMessage sendMessageByText(Update update, Long chatId, Long userId) {
         if (update.getMessage().getText().equals(adminCleanDb)) {
             log.error("Admin mode включен");
             historyService.setState(chatId, ActionType.ADMIN_MODE);
@@ -55,7 +63,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
         return eventMainService.makeMessageByText(update, chatId, userId);
     }
 
-    public SendMessage sendMessageByCallback(Update update, Long chatId, Long userId) {
+    public BotMessage sendMessageByCallback(Update update, Long chatId, Long userId) {
         log.info("HAS CALLBACK");
         return eventMainService.makeMessageByCallback(update, chatId, userId);
     }
@@ -67,20 +75,23 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
         }
         ActionType state = historyService.getActualState(chatId);
         log.warn("🥵repeatConsume {}", state);
-        SendMessage second = eventMainService.makeMessageByText(update, chatId, userId);
-        executeMessage(second);
+        BotMessage second = eventMainService.makeMessageByText(update, chatId, userId);
+        executeMessage(second, chatId);
 
         historyService.setZeroAttempts(userId);
     }
 
 
-    public void executeMessage(SendMessage message) {
-
+    public void executeMessage(BotMessage botMessage, Long chatId) {
         try {
-            telegramClient.execute(message);
+            deleteMessageService.editPreviousMessage(chatId);
+            Message message = telegramClient.execute(botMessage.getSendMessage());
+            LastMessage lastMessage = new LastMessage(message, botMessage.getDeleteStrategy());
+            deleteMessageService.setLestMessage(chatId, lastMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+
     }
 
 

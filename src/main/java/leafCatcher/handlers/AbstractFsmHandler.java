@@ -4,6 +4,8 @@ import leafCatcher.history.ActionType;
 import leafCatcher.history.DraftService;
 import leafCatcher.history.HistoryService;
 import leafCatcher.service.TextService;
+import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -40,35 +42,6 @@ public abstract class AbstractFsmHandler {
                 update.hasCallbackQuery() &&
                 update.getCallbackQuery().getData() != null;
     }
-    protected SendMessage expectTextOrReject(Update update, Long chatId, String expectedHint) {
-        if (hasCallback(update)) {
-            log.warn("AntiClick: callback received when text expected. data={}", getCallbackData(update));
-            return wrongInput(chatId, expectedHint);
-        }
-        if (!hasText(update)) {
-            return wrongInput(chatId, expectedHint);
-        }
-        return null; // значит всё ок, хендлер продолжает
-    }
-    protected SendMessage rejectStaleCallbackWhenTextExpected(Update update, Long chatId, String expectedHint) {
-        if (hasCallback(update)) {
-            log.warn("AntiClick: stale callback when text expected. data={}", getCallbackData(update));
-            return wrongInput(chatId, expectedHint);
-        }
-        return null;
-    }
-
-
-    protected SendMessage expectCallbackOrReject(Update update, Long chatId, String expectedHint) {
-        if (hasText(update)) {
-            log.warn("AntiClick: text received when callback expected. text={}", getText(update));
-            return wrongInput(chatId, expectedHint);
-        }
-        if (!hasCallback(update)) {
-            return wrongInput(chatId, expectedHint);
-        }
-        return null;
-    }
 
     protected SendMessage rejectCallbackWhenExpectingText(Update update, Long chatId, String expectedHint) {
         if (hasCallback(update)) {
@@ -89,11 +62,12 @@ public abstract class AbstractFsmHandler {
         return hasCallback(update) ? update.getCallbackQuery().getData() : null;
     }
 
-    protected SendMessage wrongInput(Long chatId, String expected) {
-        return new SendMessage(
+    protected BotMessage wrongInput(Long chatId, String expected, DeleteStrategy deleteStrategy) {
+        SendMessage sendMessage = new SendMessage(
                 chatId.toString(),
                 "Сейчас я жду от тебя " + expected + " 🙂"
         );
+        return new BotMessage(sendMessage, deleteStrategy);
     }
 
     protected void goToEnding(Update update, Long chatId, Long userId) {
@@ -102,11 +76,12 @@ public abstract class AbstractFsmHandler {
         historyService.setState(chatId, ActionType.GET_ENDING);
     }
 
-    protected SendMessage handleNoChildren(Update update, Long chatId, Long userId) {
+    protected BotMessage handleNoChildren(Update update, Long chatId, Long userId, DeleteStrategy deleteStrategy) {
         log.warn("no children events");
         historyService.setAttemptsToExecute(userId, 2);
         historyService.setState(chatId, ActionType.WRITE_NEXT_QUESTION);
-        return new SendMessage(chatId.toString(), "Продолжение еще не написано");
+        SendMessage sendMessage = new SendMessage(chatId.toString(), "Продолжение еще не написано");
+        return new BotMessage(sendMessage, DeleteStrategy.NONE);
     }
 
     protected void handleNoRoot(Update update, Long chatId, Long userId) {
