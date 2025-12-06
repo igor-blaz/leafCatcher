@@ -33,6 +33,7 @@ public class GoBackHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.GO_BACK)
     public BotMessage goBack(Update update, Long chatId, Long userId) {
+        int hp = ActionType.GO_BACK.getLifeTime();
         historyService.setState(chatId, ActionType.GET_CHILD);
         Event child = historyService.getCurrentEvent(userId);
         Event parent = eventStorage.getParent(child.getElementId());
@@ -40,6 +41,10 @@ public class GoBackHandler extends AbstractFsmHandler {
 
         List<Event> patentsChildren = eventStorage.getChildren(parent.getElementId());
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(patentsChildren, userId);
-        return messageFactory.makeMessage(chatId, markup, parent.getDescription(), DeleteStrategy.NONE);
+        return messageFactory.makeMessage(chatId,
+                markup,
+                parent.getDescription(),
+                DeleteStrategy.NONE,
+                hp);
     }
 }

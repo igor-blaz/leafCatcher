@@ -86,7 +86,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
         try {
             deleteMessageService.editPreviousMessage(chatId);
             Message message = telegramClient.execute(botMessage.getSendMessage());
-            LastMessage lastMessage = new LastMessage(message, botMessage.getDeleteStrategy());
+            LastMessage lastMessage = new LastMessage(message, botMessage.getDeleteStrategy(), botMessage.getHp());
             deleteMessageService.setLestMessage(chatId, lastMessage);
         } catch (TelegramApiException e) {
             e.printStackTrace();
