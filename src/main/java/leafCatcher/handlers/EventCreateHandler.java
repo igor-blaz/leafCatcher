@@ -37,19 +37,20 @@ public class EventCreateHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.CHILD_DESCRIPTION_AWAIT)
     public BotMessage handleAwaitDescription(Update update, Long chatId, Long userId) {
         //1. Информируем, что нет продолжения. Переводим в состояние создания кнопки
-
+        int hp = ActionType.CHILD_DESCRIPTION_AWAIT.getLifeTime();
         historyService.setState(chatId, ActionType.CHILD_BUTTON_CREATION);
         return messageFactory.makeTextMessage(chatId,
                 "Хорошо 🌿 Озаглавь следующее событие ✨",
-                DeleteStrategy.DELETE_ON_NEXT);
+                DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 
 
     @FSMRoute(ActionType.CHILD_DESCRIPTION_CREATION)
     public BotMessage handleEventDescription(Update update, Long chatId, Long userId) {
         SendMessage reject = rejectCallbackWhenExpectingText(update, chatId, "текст описания события");
+        int hp = ActionType.CHILD_DESCRIPTION_CREATION.getLifeTime();
         if (reject != null) {
-            return new BotMessage(reject, DeleteStrategy.NONE);
+            return new BotMessage(reject, DeleteStrategy.NONE, hp);
         }
         if (!hasText(update)) {
             return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE);
@@ -61,7 +62,7 @@ public class EventCreateHandler extends AbstractFsmHandler {
         if (parent == null) {
             return messageFactory.makeTextMessage(chatId,
                     "Не могу создать кнопку: не найден родительский лист 🥲",
-                    DeleteStrategy.NONE);
+                    DeleteStrategy.NONE, hp);
         }
         Event child = EventMapper.makeEvent(update, description, buttonName, false);
         child = eventStorage.saveChild(parent.getElementId(), child);
@@ -72,14 +73,15 @@ public class EventCreateHandler extends AbstractFsmHandler {
                 chatId.toString(),
                 textService.get("bot.info.userCreatedChildDescription")
         );
-        return new BotMessage(sendMessage, DeleteStrategy.NONE);
+        return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
     }
 
     @FSMRoute(ActionType.CHILD_BUTTON_CREATION)
     public BotMessage handleRootButton(Update update, Long chatId, Long userId) {
+        int hp = ActionType.CHILD_BUTTON_CREATION.getLifeTime();
         SendMessage reject = rejectCallbackWhenExpectingText(update, chatId, "текст описания события");
         if (reject != null) {
-            return new BotMessage(reject, DeleteStrategy.NONE);
+            return new BotMessage(reject, DeleteStrategy.NONE, hp);
         }
         if (!hasText(update)) {
             return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE);
@@ -89,7 +91,7 @@ public class EventCreateHandler extends AbstractFsmHandler {
         historyService.setState(chatId, ActionType.CHILD_DESCRIPTION_CREATION);
         SendMessage sendMessage = new SendMessage(chatId.toString(),
                 "Отлично! Кнопка будет называться " + buttonName + " теперь напиши событие 🪶");
-        return new BotMessage(sendMessage, DeleteStrategy.NONE);
+        return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
     }
 
 
@@ -111,15 +113,16 @@ public class EventCreateHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.REPEAT_CURRENT)
     public BotMessage handleGetCurrent(Update update, Long chatId, Long userId) {
+        int hp = ActionType.REPEAT_CURRENT.getLifeTime();
         Event current = historyService.getCurrentEvent(userId);
         if (current == null) {
             log.warn("Текущее событие не найдено для пользователя {}", userId);
             SendMessage sendMessage = new SendMessage(chatId.toString(), "Не найдено текущее событие 🥲");
-            return new BotMessage(sendMessage, DeleteStrategy.NONE);
+            return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
         }
         List<Event> children = eventStorage.getChildren(current.getElementId());
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
-        return messageFactory.makeMessage(chatId, markup, current.getDescription(), DeleteStrategy.NONE);
+        return messageFactory.makeMessage(chatId, markup, current.getDescription(), DeleteStrategy.NONE, hp);
     }
 }
 

@@ -10,16 +10,15 @@ public class BotMessage {
 
     private final SendMessage sendMessage;
     private final DeleteStrategy deleteStrategy;
+    private final Integer hp;
 
     public BotMessage(@NonNull SendMessage sendMessage,
-                      @NonNull DeleteStrategy deleteStrategy) {
+                      @NonNull DeleteStrategy deleteStrategy,
+                      Integer hp) {
         this.sendMessage = sendMessage;
         this.deleteStrategy = deleteStrategy;
+        this.hp =
     }
 
-    // удобный конструктор по умолчанию
-    public BotMessage(@NonNull SendMessage sendMessage) {
-        this(sendMessage, DeleteStrategy.NONE);
-    }
 
 }

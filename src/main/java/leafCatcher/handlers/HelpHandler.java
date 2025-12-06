@@ -29,7 +29,8 @@ public class HelpHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.I_DONT_KNOW)
     public BotMessage handleIDontKnow(Update update, Long chatId, Long userId) {
+        int hp = ActionType.I_DONT_KNOW.getLifeTime();
         historyService.setAttemptsToExecute(userId, 2);
-        return messageFactory.makeIDontKnowMessage(chatId, userId, DeleteStrategy.DELETE_ON_NEXT);
+        return messageFactory.makeIDontKnowMessage(chatId, userId, DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 }
