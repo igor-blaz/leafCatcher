@@ -32,9 +32,10 @@ public class CreditsHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.CREDITS)
     public BotMessage handleAfterParty(Update update, Long chatId, Long userId) {
+        int hp = ActionType.CREDITS.getLifeTime();
         historyService.setAttemptsToExecute(userId, 2);
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
         String credits = textService.getMarkdown("ru.bot.info.credits");
-        return messageFactory.makeTextMessage(chatId, credits, DeleteStrategy.NONE);
+        return messageFactory.makeTextMessage(chatId, credits, DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 }

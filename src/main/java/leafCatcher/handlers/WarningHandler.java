@@ -34,13 +34,14 @@ public class WarningHandler extends AbstractFsmHandler {
     public BotMessage adminMode(Update update, Long chatId, Long userId) {
         log.info("AdminMode method");
         if (update.getMessage().getText().equals(super.adminCleanDb)) {
+            int hp = ActionType.ADMIN_MODE.getLifeTime();
             eventStorage.killThemAll();
             historyService.setState(chatId, ActionType.START);
             historyService.setAttemptsToExecute(userId, 2);
             log.info("🔥🔥🔥🔥 База данных удалена ");
 
             SendMessage sendMessage = new SendMessage(chatId.toString(), "💎💎💎Привет, Админ. База данных очищена");
-            return new BotMessage(sendMessage, DeleteStrategy.NONE);
+            return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
         }
         return null;
     }

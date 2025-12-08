@@ -13,7 +13,6 @@ import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
@@ -44,7 +43,7 @@ public class GoBackHandler extends AbstractFsmHandler {
         return messageFactory.makeMessage(chatId,
                 markup,
                 parent.getDescription(),
-                DeleteStrategy.NONE,
+                DeleteStrategy.DELETE_ON_NEXT,
                 hp);
     }
 }

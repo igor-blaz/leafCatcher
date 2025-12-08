@@ -88,7 +88,7 @@ public class MarkupFactory {
         InlineKeyboardButton back = ButtonFactory.createRepeatCurrentEventButton();
 
 
-        //Если есть, что добавить ставим (написать концовку написать продолжение  или связать)
+        //Если есть что добавить ставим (написать концовку написать продолжение  или связать)
         if (eventsSize < MAX_EVENTS_FOR_CHILD) {
             //Написать продолжение
             InlineKeyboardButton toBeContinuedButton = ButtonFactory.createToBeContinuedButton();

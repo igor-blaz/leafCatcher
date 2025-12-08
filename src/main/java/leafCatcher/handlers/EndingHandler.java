@@ -49,7 +49,7 @@ public class EndingHandler extends AbstractFsmHandler {
             return new BotMessage(reject, DeleteStrategy.NONE, hp);
         }
         if (!hasText(update)) {
-            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE);
+            return wrongInput(chatId, "текст описания события", DeleteStrategy.DELETE_ON_NEXT, 0);
         }
 
         String button = update.getMessage().getText();
@@ -68,7 +68,7 @@ public class EndingHandler extends AbstractFsmHandler {
             return new BotMessage(reject, DeleteStrategy.NONE, hp);
         }
         if (!hasText(update)) {
-            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE);
+            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE, hp);
         }
 
 
@@ -95,12 +95,12 @@ public class EndingHandler extends AbstractFsmHandler {
     public BotMessage handleGetEnding(Update update, Long chatId, Long userId) {
         int hp = ActionType.GET_ENDING.getLifeTime();
         if (!hasCallback(update)) {
-            return wrongInput(chatId, "Нужно нажать кнопку", DeleteStrategy.NONE);
+            return wrongInput(chatId, "Нужно нажать кнопку", DeleteStrategy.NONE, hp);
         }
         Event ending = historyService.getCurrentEvent(userId);
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
         SendMessage sendMessage = new SendMessage(chatId.toString(), ending.getDescription());
-        return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
+        return new BotMessage(sendMessage, DeleteStrategy.DELETE_BUTTONS, hp);
     }
 
 

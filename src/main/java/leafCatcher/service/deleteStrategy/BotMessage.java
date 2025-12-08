@@ -17,7 +17,7 @@ public class BotMessage {
                       Integer hp) {
         this.sendMessage = sendMessage;
         this.deleteStrategy = deleteStrategy;
-        this.hp =
+        this.hp = hp;
     }
 
 

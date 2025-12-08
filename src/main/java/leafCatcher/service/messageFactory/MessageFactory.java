@@ -29,16 +29,21 @@ public class MessageFactory {
 
     public BotMessage makeMessage(long chatId,
                                   InlineKeyboardMarkup markup,
-                                  String description, DeleteStrategy deleteStrategy) {
+                                  String description,
+                                  DeleteStrategy deleteStrategy,
+                                  int hp) {
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
                 .text(description)
                 .replyMarkup(markup)
                 .build();
-        return new BotMessage(sendMessage, deleteStrategy);
+        return new BotMessage(sendMessage, deleteStrategy, hp);
     }
 
-    public BotMessage makeWriteOrNotMessage(Long chatId, Event event, DeleteStrategy deleteStrategy) {
+    public BotMessage makeWriteOrNotMessage(Long chatId,
+                                            Event event,
+                                            DeleteStrategy deleteStrategy,
+                                            int hp) {
         InlineKeyboardButton iDontWant = ButtonFactory.createIDontWantWrite();
         InlineKeyboardButton iWant = ButtonFactory.createToBeContinuedButton();
         InlineKeyboardButton iWantWriteEnding = ButtonFactory.createWriteEndButton();
@@ -50,13 +55,14 @@ public class MessageFactory {
                 iWantWriteEnding, putInMemory, insertFromMemory, delete);
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(row);
-        return makeMessage(chatId, markup, event.getDescription(), deleteStrategy);
+        return makeMessage(chatId, markup, event.getDescription(), deleteStrategy, hp);
     }
 
     public BotMessage makeQuestionMessage(Update update,
                                           Long chatId,
                                           Long userId,
-                                          DeleteStrategy deleteStrategy) {
+                                          DeleteStrategy deleteStrategy,
+                                          int hp) {
         InlineKeyboardButton goBack = ButtonFactory.createGoBackButton();
         InlineKeyboardButton goNext = ButtonFactory.createGoNextButton();
         InlineKeyboardRow row = new InlineKeyboardRow();
@@ -69,7 +75,11 @@ public class MessageFactory {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboard);
         String name = GetTelegramUserName.getName(update);
 
-        return makeMessage(chatId, markup, name + " ,куда пойдем дальше? ", deleteStrategy);
+        return makeMessage(chatId,
+                markup,
+                name + " ,куда пойдем дальше? ",
+                deleteStrategy,
+                hp);
     }
 
     public BotMessage makeAfterEndMessage(Update update,
