@@ -1,6 +1,11 @@
 package leafCatcher.history;
 
+import lombok.Getter;
+
+@Getter
 public enum ActionType {
+
+
     INTRO(2),
     START(2),
     DO_ACTION(2),
@@ -42,8 +47,5 @@ public enum ActionType {
 
     ActionType(int lifeTime) {
         this.lifeTime = lifeTime;
-    }
-    public int getLifeTime() {
-        return lifeTime;
     }
 }

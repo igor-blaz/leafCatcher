@@ -15,14 +15,7 @@ public class LastMessage {
         this.hp = hp;
     }
 
-    private int setHp() {
-        return switch (deleteStrategy) {
-            case DELETE_ON_NEXT -> 1;
-            default -> 0;
-        };
-    }
-
-    private boolean setEditAfter() {
+    private boolean isAlive() {
         return hp > 0;
     }
 

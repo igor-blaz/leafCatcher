@@ -66,7 +66,7 @@ public class EventMainService {
 
             SendMessage sendMessage = new SendMessage(chatId.toString(),
                     "Эта кнопка уже неактуальна 🙂\nСейчас я жду от тебя текст.");
-            return new BotMessage(sendMessage, DeleteStrategy.NONE);
+            return new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, 0);
         }
         String data = update.getCallbackQuery().getData();
         ActionType type;
@@ -82,7 +82,7 @@ public class EventMainService {
             } else {
                 SendMessage sendMessage = new SendMessage(chatId.toString(),
                         "❌ Неизвестный callback: " + data);
-                return new BotMessage(sendMessage, DeleteStrategy.NONE);
+                return new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, 0);
             }
         }
     }
@@ -100,7 +100,9 @@ public class EventMainService {
     }
 
     private BotMessage dispatch(ActionType actionType,
-                                Update update, Long chatId, Long userId) {
+                                Update update,
+                                Long chatId,
+                                Long userId) {
         ActionType takeAgainActionType;
         Object takeAgainResult;
 
@@ -115,7 +117,7 @@ public class EventMainService {
         }
 
         SendMessage sendMessage = new SendMessage(chatId.toString(), "Ошибка");
-        return new BotMessage(sendMessage, DeleteStrategy.NONE);
+        return new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, 0);
     }
 
     //Проверка, String == UUID?

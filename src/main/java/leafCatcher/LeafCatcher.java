@@ -45,7 +45,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
             botMessage = sendMessageByCallback(update, chatId, userId);
         } else {
             SendMessage sendMessage = new SendMessage(chatId.toString(), "Кажется, это ошибка");
-            botMessage = new BotMessage(sendMessage, DeleteStrategy.NONE);
+            botMessage = new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, 0);
 
         }
         ActionType state = historyService.getActualState(chatId);
@@ -84,11 +84,13 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
 
     public void executeMessage(BotMessage botMessage, Long chatId) {
         try {
-            deleteMessageService.editPreviousMessage(chatId);
             Message message = telegramClient.execute(botMessage.getSendMessage());
             LastMessage lastMessage = new LastMessage(message, botMessage.getDeleteStrategy(), botMessage.getHp());
+            log.info("Последнее сообщение {}", lastMessage.getMessage().getText());
             deleteMessageService.setLestMessage(chatId, lastMessage);
+            deleteMessageService.editPreviousMessage(chatId);
         } catch (TelegramApiException e) {
+            //noinspection CallToPrintStackTrace
             e.printStackTrace();
         }
 

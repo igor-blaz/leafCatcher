@@ -53,7 +53,7 @@ public class EventCreateHandler extends AbstractFsmHandler {
             return new BotMessage(reject, DeleteStrategy.NONE, hp);
         }
         if (!hasText(update)) {
-            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE);
+            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE, hp);
         }
         String description = update.getMessage().getText();
         draftService.setChildDescription(userId, description);
@@ -73,7 +73,7 @@ public class EventCreateHandler extends AbstractFsmHandler {
                 chatId.toString(),
                 textService.get("bot.info.userCreatedChildDescription")
         );
-        return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
+        return new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 
     @FSMRoute(ActionType.CHILD_BUTTON_CREATION)
@@ -84,31 +84,34 @@ public class EventCreateHandler extends AbstractFsmHandler {
             return new BotMessage(reject, DeleteStrategy.NONE, hp);
         }
         if (!hasText(update)) {
-            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE);
+            return wrongInput(chatId, "текст описания события", DeleteStrategy.NONE, hp);
         }
         String buttonName = update.getMessage().getText();
         draftService.setChildButtonName(userId, buttonName);
         historyService.setState(chatId, ActionType.CHILD_DESCRIPTION_CREATION);
         SendMessage sendMessage = new SendMessage(chatId.toString(),
                 "Отлично! Кнопка будет называться " + buttonName + " теперь напиши событие 🪶");
-        return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
+        return new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 
 
     @FSMRoute(ActionType.GET_CHILD)
     public BotMessage handleGetRoot(Update update, Long chatId, Long userId) {
         log.info("гет child метод");
+        int hp = ActionType.GET_CHILD.getLifeTime();
         Event parent = historyService.getCurrentEvent(userId);
         if (parent.getIsEnd()) {
             goToEnding(update, chatId, userId);
+            log.error("!!!!!!!!!!!!!!!!!!!!!!");
             return null;
         }
         List<Event> children = eventStorage.getChildren(parent.getElementId());
         if (children.isEmpty() && !parent.getIsEnd()) {
-            return handleNoChildren(update, chatId, userId, DeleteStrategy.NONE);
+            return handleNoChildren(update, chatId, userId, DeleteStrategy.NONE, hp);
         }
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
-        return messageFactory.makeMessage(chatId, markup, parent.getDescription(), DeleteStrategy.NONE);
+        return messageFactory.makeMessage(chatId, markup, parent.getDescription(),
+                DeleteStrategy.DELETE_BUTTONS, hp);
     }
 
     @FSMRoute(ActionType.REPEAT_CURRENT)
@@ -122,7 +125,7 @@ public class EventCreateHandler extends AbstractFsmHandler {
         }
         List<Event> children = eventStorage.getChildren(current.getElementId());
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
-        return messageFactory.makeMessage(chatId, markup, current.getDescription(), DeleteStrategy.NONE, hp);
+        return messageFactory.makeMessage(chatId, markup, current.getDescription(), DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 }
 
