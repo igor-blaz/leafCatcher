@@ -35,29 +35,33 @@ public class QuestionHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.BACK_OR_FORWARD_QUESTION)
     public BotMessage handleRootButton(Update update, Long chatId, Long userId) {
         int hp = ActionType.BACK_OR_FORWARD_QUESTION.getLifeTime();
-        return messageFactory.makeQuestionMessage(update, chatId, userId, DeleteStrategy.NONE, hp);
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
+        return messageFactory.makeQuestionMessage(update, chatId, userId, deleteStrategy, hp);
     }
 
     @FSMRoute(ActionType.WRITE_NEXT_QUESTION)
     public BotMessage handleEventNotification(Update update, Long chatId, Long userId) {
         int hp = ActionType.WRITE_NEXT_QUESTION.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         Event current = historyService.getCurrentEvent(userId);
-        return messageFactory.makeWriteOrNotMessage(chatId, current, DeleteStrategy.DELETE_ON_NEXT, hp);
+        return messageFactory.makeWriteOrNotMessage(chatId, current, deleteStrategy, hp);
     }
 
     @FSMRoute(ActionType.DO_ACTION)
     public BotMessage handleDoAction(Update update, Long chatId, Long userId) {
         int hp = ActionType.DO_ACTION.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         Event current = historyService.getCurrentEvent(userId);
         int size = eventStorage.getChildren(current.getElementId()).size();
         InlineKeyboardMarkup markup = markupFactory.makeActionMarkup(size, userId, current);
-        return messageFactory.makeMessage(chatId, markup, "Вот действия", DeleteStrategy.DELETE_ON_NEXT, hp);
+        return messageFactory.makeMessage(chatId, markup, "Вот действия", deleteStrategy, hp);
     }
 
     @FSMRoute(ActionType.DELETE)
     public BotMessage handleDeleteEvent(Update update, Long chatId, Long userId) {
         log.info("Dleete handler");
         int hp = ActionType.DELETE.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         Event currentEventForDelete = historyService.getCurrentEvent(userId);
         List<Event> childList = eventStorage.getChildren(currentEventForDelete.getElementId());
         String name = GetTelegramUserName.getName(update);
@@ -81,7 +85,7 @@ public class QuestionHandler extends AbstractFsmHandler {
         historyService.setState(chatId, ActionType.REPEAT_CURRENT);
 
         eventStorage.deleteById(currentEventForDelete.getElementId());
-        return messageFactory.makeTextMessage(chatId, "Отлично, событие удалено🔥", DeleteStrategy.NONE, hp);
+        return messageFactory.makeTextMessage(chatId, "Отлично, событие удалено🔥", deleteStrategy, hp);
     }
 
 

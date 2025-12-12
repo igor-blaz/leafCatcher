@@ -30,6 +30,7 @@ public class MemoryHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.PUT_IN_MEMORY)
     public BotMessage putInMemory(Update update, Long chatId, Long userId) {
         int hp = ActionType.PUT_IN_MEMORY.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         log.info("Put in memory");
         historyService.setState(chatId, ActionType.REPEAT_CURRENT);
         historyService.setAttemptsToExecute(userId, 2);
@@ -43,32 +44,33 @@ public class MemoryHandler extends AbstractFsmHandler {
         historyService.addInMemory(userId, current);
         return messageFactory.makeTextMessage(chatId,
                 "Отлично, событие " + current.getShortName() + " сохранено",
-                DeleteStrategy.NONE, hp);
+                deleteStrategy, hp);
     }
 
     @FSMRoute(ActionType.BOND)
     public BotMessage showMemory(Update update, Long chatId, Long userId) {
         int hp = ActionType.BOND.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         log.info("Show memory");
         historyService.setAttemptsToExecute(userId, 2);
         Event memoryEvent = historyService.showMemory(userId);
         if (memoryEvent == null) {
             return messageFactory.makeTextMessage(chatId,
                     "У вас в памяти ноль событий",
-                    DeleteStrategy.NONE, hp);
+                    DeleteStrategy.DELETE_ON_NEXT, hp);
         }
 
         Event parent = historyService.getCurrentEvent(userId);
         if (parent == null) {
             return messageFactory.makeTextMessage(chatId,
                     "Сейчас нет события, к которому можно привязать память.",
-                    DeleteStrategy.NONE, hp);
+                    DeleteStrategy.DELETE_ON_NEXT, hp);
         }
 
         if (parent.getElementId().equals(memoryEvent.getElementId())) {
             return messageFactory.makeTextMessage(chatId,
                     "Нельзя привязать событие само к себе 🙂",
-                    DeleteStrategy.NONE, hp);
+                    DeleteStrategy.DELETE_ON_NEXT, hp);
         }
 
         eventStorage.saveChildNoBack(parent.getElementId(), memoryEvent);
@@ -77,7 +79,7 @@ public class MemoryHandler extends AbstractFsmHandler {
                 chatId,
                 "Отлично. Получилось событие привязать: " + memoryEvent.getShortName() +
                         "к событию " + parent.getShortName(),
-                DeleteStrategy.NONE, hp
+                deleteStrategy, hp
         );
     }
 

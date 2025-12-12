@@ -35,28 +35,31 @@ public class RootCreateHandler extends AbstractFsmHandler {
     public BotMessage handleRootNotification(Update update, Long chatId, Long userId) {
         log.info("Root is absence");
         int hp = ActionType.ROOT_IS_ABSENCE_INFO.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         //1. Проинформировали, что нет корневого события. Переводим в состояние создания кнопки
         historyService.setState(chatId, ActionType.ROOT_BUTTON_CREATION);
         SendMessage sendMessage = new SendMessage(chatId.toString(), textService.get("bot.info.thereIsNoRoot"));
-        return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
+        return new BotMessage(sendMessage, deleteStrategy, hp);
     }
 
     @FSMRoute(ActionType.ROOT_BUTTON_CREATION)
     public BotMessage handleRootButton(Update update, Long chatId, Long userId) {
         //2. Создаем кнопку. Переводим в состояние создания описания
         int hp = ActionType.ROOT_BUTTON_CREATION.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         String buttonName = update.getMessage().getText();
         draftService.setRootButtonName(userId, buttonName);
         historyService.setState(chatId, ActionType.ROOT_DESCRIPTION_CREATION);
         SendMessage sendMessage = new SendMessage(chatId.toString(), "Отлично! Кнопка будет называться " + buttonName +
                 " теперь ты можешь написать событие");
-        return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
+        return new BotMessage(sendMessage, deleteStrategy, hp);
     }
 
     @FSMRoute(ActionType.ROOT_DESCRIPTION_CREATION)
     public BotMessage handleRootDescription(Update update, Long chatId, Long userId) {
         //3. Создаем описание. Переводим в состояние Вперед или назад.
         int hp = ActionType.ROOT_DESCRIPTION_CREATION.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         String description = update.getMessage().getText();
         draftService.setRootDescription(userId, description);
 
@@ -69,13 +72,14 @@ public class RootCreateHandler extends AbstractFsmHandler {
 
 
         SendMessage sendMessage = new SendMessage(chatId.toString(), textService.get("bot.info.userCreatedRootDescription"));
-        return new BotMessage(sendMessage, DeleteStrategy.NONE, hp);
+        return new BotMessage(sendMessage, deleteStrategy, hp);
     }
 
 
     @FSMRoute(ActionType.GET_ROOT)
     public BotMessage handleGetRoot(Update update, Long chatId, Long userId) {
         int hp = ActionType.GET_ROOT.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         Event root = eventStorage.getRootEvent();
         if (root == null) {
             log.info("root is null again");
@@ -87,6 +91,6 @@ public class RootCreateHandler extends AbstractFsmHandler {
         historyService.setAttemptsToExecute(userId, 2);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(List.of(root), userId);
         return messageFactory.makeEventMessage(chatId, markup, root,
-                DeleteStrategy.DELETE_ON_NEXT, hp);
+                deleteStrategy, hp);
     }
 }

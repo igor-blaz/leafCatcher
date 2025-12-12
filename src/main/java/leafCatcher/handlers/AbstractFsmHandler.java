@@ -81,7 +81,7 @@ public abstract class AbstractFsmHandler {
         historyService.setAttemptsToExecute(userId, 2);
         historyService.setState(chatId, ActionType.WRITE_NEXT_QUESTION);
         SendMessage sendMessage = new SendMessage(chatId.toString(), "Продолжение еще не написано");
-        return new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, 3);
+        return new BotMessage(sendMessage, DeleteStrategy.DELETE_AFTER_ONE, 3);
     }
 
 }

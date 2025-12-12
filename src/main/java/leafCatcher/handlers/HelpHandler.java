@@ -6,6 +6,7 @@ import leafCatcher.history.FSMRoute;
 import leafCatcher.history.HistoryService;
 import leafCatcher.service.TextService;
 import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
@@ -28,10 +29,11 @@ public class HelpHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.I_DONT_KNOW)
     public BotMessage handleIDontKnow(Update update, Long chatId, Long userId) {
         int hp = ActionType.I_DONT_KNOW.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         historyService.setAttemptsToExecute(userId, 2);
         return messageFactory.makeIDontKnowMessage(chatId,
                 userId,
-                ActionType.I_DONT_KNOW.getDeleteStrategy(),
+                deleteStrategy,
                 hp);
     }
 }
