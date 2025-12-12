@@ -45,7 +45,7 @@ public abstract class AbstractFsmHandler {
 
     protected SendMessage rejectCallbackWhenExpectingText(Update update, Long chatId, String expectedHint) {
         if (hasCallback(update)) {
-            log.warn("AntiClick: stale callback received when expecting text. data={}", getCallbackData(update));
+            //log.warn("AntiClick: stale callback received when expecting text. data={}", getCallbackData(update));
             return new SendMessage(
                     chatId.toString(),
                     "Эта кнопка уже неактуальна 🙂\nСейчас я жду от тебя " + expectedHint

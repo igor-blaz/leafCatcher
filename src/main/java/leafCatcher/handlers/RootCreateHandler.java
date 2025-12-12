@@ -86,7 +86,7 @@ public class RootCreateHandler extends AbstractFsmHandler {
         historyService.setState(chatId, ActionType.CHILD_DESCRIPTION_AWAIT);
         historyService.setAttemptsToExecute(userId, 2);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(List.of(root), userId);
-        return messageFactory.makeMessage(chatId, markup, root.getDescription(),
+        return messageFactory.makeEventMessage(chatId, markup, root,
                 DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 }

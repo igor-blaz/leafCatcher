@@ -1,103 +1,93 @@
 package leafCatcher.service.deleteStrategy;
 
+import leafCatcher.model.Event;
+import leafCatcher.service.deleteStrategy.storages.AllMessagesStorage;
+import leafCatcher.service.deleteStrategy.storages.MessagesWithEventsStorage;
+import leafCatcher.service.deleteStrategy.storages.WaitingToDeleteStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
-import java.util.Deque;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class DeleteMessageService {
-    private final Map<Long, LastMessage> lastMessageMap = new ConcurrentHashMap<>();
-    private final Map<Long, Deque<LastMessage>> allMessages = new ConcurrentHashMap<>();
-    private final Map<Long, Deque<LastMessage>> waitingToDelete = new ConcurrentHashMap<>();
+    private final Map<Long, LastMessage> current = new ConcurrentHashMap<>();
+    private final AllMessagesStorage allMessages;
+    private final WaitingToDeleteStorage waitingMessages;
+    private final MessagesWithEventsStorage withEvents;
+    private final ExecuteDelete executeDelete;
     private final TelegramClient telegramClient;
 
     public void setLestMessage(Long chatId, LastMessage lastMessage) {
-        lastMessageMap.put(chatId, lastMessage);
-        addToAllMessages(chatId, lastMessage);
-        addToWaiting(chatId, lastMessage);
+        log.info("🔥🔥🔥🔥🔥");
+        log.info("🔥🔥🔥🔥🔥 current {} ", lastMessage.getMessage().getText());
+        current.put(chatId, lastMessage);
+        allMessages.addToAllMessages(chatId, lastMessage);
+        waitingMessages.addToWaiting(chatId, lastMessage);
+        withEvents.addToWithEvents(chatId, lastMessage);
+
     }
 
-    private void removeFromAllMessages(Long chatId, LastMessage lastMessage) {
-        Deque<LastMessage> all = allMessages.get(chatId);
-        if (all != null) {
-            all.remove(lastMessage);
+    public void deleteFromAllStorages(Long chatId, LastMessage lastMessage) {
+        waitingMessages.remove(chatId, lastMessage);
+        allMessages.remove(chatId, lastMessage);
+        withEvents.remove(chatId, lastMessage);
+    }
+
+    public void deleteAllChat(Long chatId) {
+        List<LastMessage> all = allMessages.getAll(chatId);
+        if (all.isEmpty()) return;
+        for (LastMessage lastMessage : all) {
+            executeDelete.execute(chatId, lastMessage);
         }
+        log.info("Все сообщения у чата {} удалены", chatId);
     }
 
-    private void removeFromWaitingMessages(Long chatId, LastMessage lastMessage) {
-        Deque<LastMessage> waiting = waitingToDelete.get(chatId);
-        if (waiting != null) {
-            waiting.remove(lastMessage);
+    public void deleteEventMessageFromChat(Long chatId, Event event) {
+        LastMessage lastMessage = withEvents.getMessageByEvent(chatId, event);
+        log.info("lastMessage is Null???? {}", lastMessage == null);
+        if (lastMessage != null) {
+            executeDelete.execute(chatId, lastMessage);
+            // withEvents.deleteOldDuplicateEvent(chatId, event);
         }
-    }
-
-    private void addToAllMessages(Long chatId, LastMessage lastMessage) {
-        if (lastMessage.getDeleteStrategy() == DeleteStrategy.NONE) {
-            return;
-        }
-        Deque<LastMessage> dequeAllMessages = allMessages.computeIfAbsent(
-                chatId,
-                id -> new ConcurrentLinkedDeque<>()
-        );
-        dequeAllMessages.addLast(lastMessage);
-    }
-
-    private void addToWaiting(Long chatId, LastMessage lastMessage) {
-        Deque<LastMessage> dequeAllMessages = waitingToDelete.computeIfAbsent(
-                chatId,
-                id -> new ConcurrentLinkedDeque<>()
-        );
-        dequeAllMessages.addLast(lastMessage);
     }
 
     private void deleteLastMessage(Long chatId, LastMessage lastMessage) {
-        removeFromWaitingMessages(chatId, lastMessage);
-        //   removeFromAllMessages(chatId, lastMessage);
-        executeDelete(chatId, lastMessage);
+        waitingMessages.remove(chatId, lastMessage);
+
+        executeDelete.execute(chatId, lastMessage);
     }
 
 
-    private void decHpForWaiting(Long chatId) {
-        Deque<LastMessage> messages = waitingToDelete.get(chatId);
+    public void decHpForWaiting(Long chatId) {
+        List<LastMessage> messages = waitingMessages.getWaiting(chatId);
         if (messages == null) {
             log.warn("decreaseHp не нашлось мапы messages");
             return;
         }
-
         //Для каждого сообщения удаляем 1 hp
         for (LastMessage lastMessage : messages) {
             lastMessage.decHp();
             if (doDeleteMessage(lastMessage, chatId)) {
-                deleteLastMessage(chatId, lastMessage);
+                boolean isDeletedFromChat = executeDelete.execute(chatId, lastMessage);
+                if (isDeletedFromChat) {
+                    deleteFromAllStorages(chatId, lastMessage);
+                }
             }
         }
     }
 
-
-    private String logging(LastMessage lm) {
-        if (lm.getMessage().hasText()) {
-            log.warn(" 💖💖💖LastMessages {}", lm.getMessage().getText());
-            return lm.getMessage().getText();
-        } else {
-            log.warn(" LastMessages нет");
-        }
-        return "нет текста ";
-    }
-
     public LastMessage getLastMessage(Long chatId) {
-        return lastMessageMap.getOrDefault(chatId, null);
+        return current.getOrDefault(chatId, null);
     }
 
     public boolean isMessageLast(Long chatId, LastMessage lm) {
@@ -106,34 +96,25 @@ public class DeleteMessageService {
     }
 
     public boolean isPreLastMessage(Long chatId, LastMessage lm) {
-        Deque<LastMessage> all = allMessages.get(chatId);
+        List<LastMessage> all = allMessages.getAll(chatId);
         if (all == null || all.size() < 2) return false;
-
-        Iterator<LastMessage> it = all.descendingIterator();
-        it.next();
-        LastMessage preLast = it.next();
-
+        LastMessage preLast = all.get(all.size() - 2);
         return preLast.getMessage().getMessageId()
                 .equals(lm.getMessage().getMessageId());
     }
 
+    public void removeButtons(Long chatId, Message message) {
+        EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
+        edit.setChatId(chatId.toString());
+        edit.setMessageId(message.getMessageId());
+        edit.setReplyMarkup(null);
 
-    public void editPreviousMessage(Long chatId) {
-        LastMessage lastMessage = getLastMessage(chatId);
-        if (lastMessage == null) return;
-        decHpForWaiting(chatId);
-        DeleteStrategy deleteStrategy = lastMessage.getDeleteStrategy();
-        log.warn("DeleteStrategy {}", deleteStrategy);
-    }
-
-    private void executeDelete(Long chatId, LastMessage lastMessage) {
         try {
-            telegramClient.execute(new DeleteMessage(chatId.toString(), lastMessage.getMessage().getMessageId()));
+            telegramClient.execute(edit);
         } catch (TelegramApiException e) {
-            e.printStackTrace();
+            e.getCause();
         }
     }
-
 
     private void removeInlineButtons(Long chatId, LastMessage lastMessage) {
         EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
@@ -150,20 +131,18 @@ public class DeleteMessageService {
 
     private boolean doDeleteMessage(LastMessage lastMessage, Long chatId) {
         int hp = lastMessage.getHp();
-        String s = logging(lastMessage);
-        log.warn("String 🔶 {}", s);
-
-        switch (lastMessage.getDeleteStrategy()) {
+        DeleteStrategy deleteStrategy = lastMessage.getDeleteStrategy();
+        switch (deleteStrategy) {
             case DELETE_BUTTONS -> {
                 //Удаляем кнопки, но не само сообщение;
-                removeFromWaitingMessages(chatId, lastMessage);
+                //lastMessage.setDeleteStrategy(DeleteStrategy.DELETE_ON_NEXT);
                 removeInlineButtons(chatId, lastMessage);
                 return false;
             }
             case NONE -> {
                 return false;
             }
-            case DELETE_AFTER1 -> {
+            case DELETE_AFTER_ONE -> {
                 return isPreLastMessage(chatId, lastMessage);
             }
             case DELETE_ON_NEXT -> {

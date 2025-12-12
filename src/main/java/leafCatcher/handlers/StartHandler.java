@@ -7,13 +7,13 @@ import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
 import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteMessageService;
 import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
@@ -22,20 +22,28 @@ import java.util.List;
 @Slf4j
 @Component
 public class StartHandler extends AbstractFsmHandler {
+    private final DeleteMessageService deleteMessageService;
 
-
-    public StartHandler(HistoryService historyService
-            , MessageFactory messageFactory,
+    public StartHandler(HistoryService historyService,
+                        MessageFactory messageFactory,
                         MarkupFactory markupFactory,
                         EventStorage eventStorage,
                         TextService textService,
-                        DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
+                        DraftService draftService,
+                        DeleteMessageService deleteMessageService) {
+        super(historyService,
+                messageFactory,
+                markupFactory,
+                eventStorage,
+                textService,
+                draftService);
+        this.deleteMessageService = deleteMessageService;
     }
 
     @FSMRoute(ActionType.START)
     public BotMessage handleStart(Update update, Long chatId, Long userId) {
         log.info("Start Handler");
+        deleteMessageService.deleteAllChat(chatId);
         int hp = ActionType.START.getLifeTime();
         historyService.setZeroAttempts(userId);
         Event root = eventStorage.getRootEvent();
@@ -55,7 +63,7 @@ public class StartHandler extends AbstractFsmHandler {
         log.info("children {}", children);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
         return messageFactory.makeMessage(chatId, markup, root.getDescription(),
-                DeleteStrategy.DELETE_ON_NEXT, hp);
+                DeleteStrategy.DELETE_BUTTONS, hp);
     }
 
     @FSMRoute(ActionType.INTRO)
@@ -66,7 +74,7 @@ public class StartHandler extends AbstractFsmHandler {
         historyService.setState(chatId, ActionType.START);
         historyService.setAttemptsToExecute(userId, 2);
         String text = textService.getMarkdown("ru.bot.info.intro");
-        return messageFactory.makeTextMessage(chatId, text, DeleteStrategy.DELETE_ON_NEXT, hp);
+        return messageFactory.makeTextMessage(chatId, text, ActionType.INTRO.getDeleteStrategy(), hp);
     }
 
 }
