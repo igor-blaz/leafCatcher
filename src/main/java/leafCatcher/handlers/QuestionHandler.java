@@ -51,7 +51,7 @@ public class QuestionHandler extends AbstractFsmHandler {
         Event current = historyService.getCurrentEvent(userId);
         int size = eventStorage.getChildren(current.getElementId()).size();
         InlineKeyboardMarkup markup = markupFactory.makeActionMarkup(size, userId, current);
-        return messageFactory.makeMessage(chatId, markup, "Вот действия", DeleteStrategy.DELETE_BUTTONS, hp);
+        return messageFactory.makeMessage(chatId, markup, "Вот действия", DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 
     @FSMRoute(ActionType.DELETE)

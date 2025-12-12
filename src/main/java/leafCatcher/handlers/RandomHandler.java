@@ -40,7 +40,7 @@ public class RandomHandler extends AbstractFsmHandler {
         }
         historyService.setState(chatId, ActionType.RANDOM);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
-        return messageFactory.makeMessage(chatId, markup, parent.getDescription(),
+        return messageFactory.makeEventMessage(chatId, markup, parent,
                 DeleteStrategy.NONE, hp);
     }
 }

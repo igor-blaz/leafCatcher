@@ -40,6 +40,22 @@ public class MessageFactory {
         return new BotMessage(sendMessage, deleteStrategy, hp);
     }
 
+    public BotMessage makeEventMessage(long chatId,
+                                       InlineKeyboardMarkup markup,
+                                       Event event,
+                                       DeleteStrategy deleteStrategy,
+                                       int hp
+
+    ) {
+        SendMessage sendMessage = SendMessage.builder()
+                .chatId(chatId)
+                .text(event.getDescription())
+                .replyMarkup(markup)
+                .build();
+        return new BotMessage(sendMessage, deleteStrategy, hp, event);
+    }
+
+
     public BotMessage makeWriteOrNotMessage(Long chatId,
                                             Event event,
                                             DeleteStrategy deleteStrategy,

@@ -110,7 +110,7 @@ public class EventCreateHandler extends AbstractFsmHandler {
             return handleNoChildren(update, chatId, userId, DeleteStrategy.NONE, hp);
         }
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
-        return messageFactory.makeMessage(chatId, markup, parent.getDescription(),
+        return messageFactory.makeEventMessage(chatId, markup, parent,
                 DeleteStrategy.DELETE_BUTTONS, hp);
     }
 
@@ -125,7 +125,7 @@ public class EventCreateHandler extends AbstractFsmHandler {
         }
         List<Event> children = eventStorage.getChildren(current.getElementId());
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
-        return messageFactory.makeMessage(chatId, markup, current.getDescription(), DeleteStrategy.DELETE_ON_NEXT, hp);
+        return messageFactory.makeEventMessage(chatId, markup, current, DeleteStrategy.DELETE_ON_NEXT, hp);
     }
 }
 

@@ -7,6 +7,7 @@ import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.TextService;
 import leafCatcher.service.deleteStrategy.BotMessage;
+import leafCatcher.service.deleteStrategy.DeleteMessageService;
 import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
@@ -21,13 +22,23 @@ import java.util.List;
 @Component
 @Slf4j
 public class GoBackHandler extends AbstractFsmHandler {
+    private final DeleteMessageService deleteMessageService;
+
     public GoBackHandler(HistoryService historyService,
                          MessageFactory messageFactory,
                          MarkupFactory markupFactory,
                          EventStorage eventStorage,
                          TextService textService,
-                         DraftService draftService) {
-        super(historyService, messageFactory, markupFactory, eventStorage, textService, draftService);
+                         DraftService draftService,
+                         DeleteMessageService deleteMessageService) {
+
+        super(historyService,
+                messageFactory,
+                markupFactory,
+                eventStorage,
+                textService,
+                draftService);
+        this.deleteMessageService = deleteMessageService;
     }
 
     @FSMRoute(ActionType.GO_BACK)
@@ -38,11 +49,13 @@ public class GoBackHandler extends AbstractFsmHandler {
         Event parent = eventStorage.getParent(child.getElementId());
         historyService.setCurrentEvent(userId, parent);
 
+        deleteMessageService.deleteEventMessageFromChat(chatId, child);
+
         List<Event> patentsChildren = eventStorage.getChildren(parent.getElementId());
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(patentsChildren, userId);
-        return messageFactory.makeMessage(chatId,
+        return messageFactory.makeEventMessage(chatId,
                 markup,
-                parent.getDescription(),
+                parent,
                 DeleteStrategy.DELETE_ON_NEXT,
                 hp);
     }

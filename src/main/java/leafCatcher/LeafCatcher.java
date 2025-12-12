@@ -33,6 +33,12 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
 
     @Override
     public void consume(Update update) {
+
+        log.info(">>> UPDATE RECEIVED: id={}, date={}, hasMessage={}",
+                update.getUpdateId(),
+                update.getMessage() != null ? update.getMessage().getDate() : null,
+                update.hasMessage());
+
         BotMessage botMessage;
         Long chatId = GetUserIdOrChatId.getChatId(update);
         Long userId = GetUserIdOrChatId.getUserId(update);
@@ -64,7 +70,6 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
     }
 
     public BotMessage sendMessageByCallback(Update update, Long chatId, Long userId) {
-        log.info("HAS CALLBACK");
         return eventMainService.makeMessageByCallback(update, chatId, userId);
     }
 
@@ -74,21 +79,30 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
             return;
         }
         ActionType state = historyService.getActualState(chatId);
-        log.warn("🥵repeatConsume {}", state);
+        log.warn("repeatConsume {}", state);
         BotMessage second = eventMainService.makeMessageByText(update, chatId, userId);
         executeMessage(second, chatId);
 
         historyService.setZeroAttempts(userId);
+
     }
 
 
     public void executeMessage(BotMessage botMessage, Long chatId) {
         try {
+
+            log.warn("🖤🖤 botMessage hasEvent  {} ", botMessage.isHasEvent());
             Message message = telegramClient.execute(botMessage.getSendMessage());
-            LastMessage lastMessage = new LastMessage(message, botMessage.getDeleteStrategy(), botMessage.getHp());
+            //deleteMessageService.removeButtons(chatId, message);
+            deleteMessageService.decHpForWaiting(chatId);
+            log.warn("❎Бот отправил message {} ", Logging.getText(message));
+            LastMessage lastMessage = new LastMessage(message,
+                    botMessage.getDeleteStrategy(),
+                    botMessage.getHp(), botMessage.getEvent());
             log.info("Последнее сообщение {}", lastMessage.getMessage().getText());
+            log.info("botMessage event is null  {}", botMessage.getEvent() == null);
+
             deleteMessageService.setLestMessage(chatId, lastMessage);
-            deleteMessageService.editPreviousMessage(chatId);
         } catch (TelegramApiException e) {
             //noinspection CallToPrintStackTrace
             e.printStackTrace();
