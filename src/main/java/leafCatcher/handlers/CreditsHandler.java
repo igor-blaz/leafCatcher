@@ -12,7 +12,6 @@ import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 
@@ -33,9 +32,10 @@ public class CreditsHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.CREDITS)
     public BotMessage handleAfterParty(Update update, Long chatId, Long userId) {
         int hp = ActionType.CREDITS.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
         historyService.setAttemptsToExecute(userId, 2);
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
         String credits = textService.getMarkdown("ru.bot.info.credits");
-        return messageFactory.makeTextMessage(chatId, credits, DeleteStrategy.DELETE_ON_NEXT, hp);
+        return messageFactory.makeTextMessage(chatId, credits,deleteStrategy, hp);
     }
 }

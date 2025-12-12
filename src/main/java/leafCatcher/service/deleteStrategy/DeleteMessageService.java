@@ -1,14 +1,11 @@
 package leafCatcher.service.deleteStrategy;
 
-import leafCatcher.model.Event;
 import leafCatcher.service.deleteStrategy.storages.AllMessagesStorage;
-import leafCatcher.service.deleteStrategy.storages.MessagesWithEventsStorage;
 import leafCatcher.service.deleteStrategy.storages.WaitingToDeleteStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
-import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
@@ -23,7 +20,7 @@ public class DeleteMessageService {
     private final Map<Long, LastMessage> current = new ConcurrentHashMap<>();
     private final AllMessagesStorage allMessages;
     private final WaitingToDeleteStorage waitingMessages;
-    private final MessagesWithEventsStorage withEvents;
+    // private final MessagesWithEventsStorage withEvents;
     private final ExecuteDelete executeDelete;
     private final TelegramClient telegramClient;
 
@@ -33,14 +30,14 @@ public class DeleteMessageService {
         current.put(chatId, lastMessage);
         allMessages.addToAllMessages(chatId, lastMessage);
         waitingMessages.addToWaiting(chatId, lastMessage);
-        withEvents.addToWithEvents(chatId, lastMessage);
+        //   withEvents.addToWithEvents(chatId, lastMessage);
 
     }
 
     public void deleteFromAllStorages(Long chatId, LastMessage lastMessage) {
         waitingMessages.remove(chatId, lastMessage);
         allMessages.remove(chatId, lastMessage);
-        withEvents.remove(chatId, lastMessage);
+        //  withEvents.remove(chatId, lastMessage);
     }
 
     public void deleteAllChat(Long chatId) {
@@ -52,18 +49,17 @@ public class DeleteMessageService {
         log.info("Все сообщения у чата {} удалены", chatId);
     }
 
-    public void deleteEventMessageFromChat(Long chatId, Event event) {
-        LastMessage lastMessage = withEvents.getMessageByEvent(chatId, event);
-        log.info("lastMessage is Null???? {}", lastMessage == null);
-        if (lastMessage != null) {
-            executeDelete.execute(chatId, lastMessage);
-            // withEvents.deleteOldDuplicateEvent(chatId, event);
-        }
-    }
+//    public void deleteEventMessageFromChat(Long chatId, Event event) {
+//        LastMessage lastMessage = withEvents.getMessageByEvent(chatId, event);
+//        log.info("lastMessage is Null???? {}", lastMessage == null);
+//        if (lastMessage != null) {
+//            executeDelete.execute(chatId, lastMessage);
+//            // withEvents.deleteOldDuplicateEvent(chatId, event);
+//        }
+//    }
 
     private void deleteLastMessage(Long chatId, LastMessage lastMessage) {
         waitingMessages.remove(chatId, lastMessage);
-
         executeDelete.execute(chatId, lastMessage);
     }
 
@@ -103,20 +99,27 @@ public class DeleteMessageService {
                 .equals(lm.getMessage().getMessageId());
     }
 
-    public void removeButtons(Long chatId, Message message) {
-        EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
-        edit.setChatId(chatId.toString());
-        edit.setMessageId(message.getMessageId());
-        edit.setReplyMarkup(null);
+    public void removeButtons(Long chatId, LastMessage lastMessage) {
+        DeleteStrategy deleteStrategy = lastMessage.getDeleteStrategy();
 
-        try {
-            telegramClient.execute(edit);
-        } catch (TelegramApiException e) {
-            e.getCause();
+        switch (deleteStrategy) {
+            case DELETE_ON_NEXT -> {
+                executeDelete.execute(chatId, lastMessage);
+                return;
+            }
+
+            case NONE -> {
+                return;
+            }
+            case DELETE_AFTER_ONE -> {
+                if (lastMessage.getHp() <= 0) {
+                    executeDelete.execute(chatId, lastMessage);
+                    return;
+                }
+                lastMessage.decHp();
+            }
+
         }
-    }
-
-    private void removeInlineButtons(Long chatId, LastMessage lastMessage) {
         EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
         edit.setChatId(chatId.toString());
         edit.setMessageId(lastMessage.getMessage().getMessageId());
@@ -133,15 +136,6 @@ public class DeleteMessageService {
         int hp = lastMessage.getHp();
         DeleteStrategy deleteStrategy = lastMessage.getDeleteStrategy();
         switch (deleteStrategy) {
-            case DELETE_BUTTONS -> {
-                //Удаляем кнопки, но не само сообщение;
-                //lastMessage.setDeleteStrategy(DeleteStrategy.DELETE_ON_NEXT);
-                removeInlineButtons(chatId, lastMessage);
-                return false;
-            }
-            case NONE -> {
-                return false;
-            }
             case DELETE_AFTER_ONE -> {
                 return isPreLastMessage(chatId, lastMessage);
             }
@@ -153,10 +147,12 @@ public class DeleteMessageService {
                 log.warn("Удаляется {}", lastMessage.getMessage().getText());
                 return hp < 0;
             }
+            default -> {
+                return false;
+            }
 
         }
-        log.warn("doDelete Необычное условие {}", lastMessage.getDeleteStrategy());
-        return false;
+
     }
 
 
