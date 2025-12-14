@@ -31,9 +31,6 @@ public class AllMessagesStorage {
 
 
     public void addToAllMessages(Long chatId, LastMessage lastMessage) {
-        if (lastMessage.getDeleteStrategy() == DeleteStrategy.NONE) {
-            return;
-        }
         List<LastMessage> dequeAllMessages = allMessages.computeIfAbsent(
                 chatId,
                 id -> new ArrayList<>()

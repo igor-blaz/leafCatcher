@@ -32,7 +32,7 @@ public class WarningHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.ADMIN_MODE)
     public BotMessage adminMode(Update update, Long chatId, Long userId) {
-        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
+        DeleteStrategy deleteStrategy = ActionType.ADMIN_MODE.getDeleteStrategy();
         log.info("AdminMode method");
         if (update.getMessage().getText().equals(super.adminCleanDb)) {
             int hp = ActionType.ADMIN_MODE.getLifeTime();

@@ -34,6 +34,6 @@ public class WaitingToDeleteStorage {
                 chatId,
                 id -> new ArrayList<>()
         );
-        listAllMessages.addLast(lastMessage);
+        listAllMessages.add(lastMessage);
     }
 }
