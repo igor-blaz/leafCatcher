@@ -44,7 +44,7 @@ public class GoBackHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.GO_BACK)
     public BotMessage goBack(Update update, Long chatId, Long userId) {
         int hp = ActionType.GO_BACK.getLifeTime();
-        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
+        DeleteStrategy deleteStrategy = ActionType.GO_BACK.getDeleteStrategy();
         historyService.setState(chatId, ActionType.GET_CHILD);
         Event child = historyService.getCurrentEvent(userId);
         Event parent = eventStorage.getParent(child.getElementId());

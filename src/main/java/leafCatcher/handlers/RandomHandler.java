@@ -30,14 +30,14 @@ public class RandomHandler extends AbstractFsmHandler {
     public BotMessage handleEventNotification(Update update, Long chatId, Long userId) {
         log.warn("RANDOM");
         int hp = ActionType.RANDOM.getLifeTime();
-        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
+        DeleteStrategy deleteStrategy = ActionType.RANDOM.getDeleteStrategy();
         Event parent = eventStorage.getRandom();
         if (parent == null) {
             parent = eventStorage.getRootEvent();
         }
         List<Event> children = eventStorage.getChildren(parent.getElementId());
         if (children == null || children.isEmpty()) {
-            return handleNoChildren(update, chatId, userId, DeleteStrategy.NONE, hp);
+            return handleNoChildren(update, chatId, userId, DeleteStrategy.DELETE_ON_NEXT, hp);
         }
         historyService.setState(chatId, ActionType.RANDOM);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);

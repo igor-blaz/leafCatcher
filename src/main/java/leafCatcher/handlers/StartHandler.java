@@ -43,9 +43,9 @@ public class StartHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.START)
     public BotMessage handleStart(Update update, Long chatId, Long userId) {
         log.info("Start Handler");
-        deleteMessageService.deleteAllChat(chatId);
+
         int hp = ActionType.START.getLifeTime();
-        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
+        DeleteStrategy deleteStrategy = ActionType.START.getDeleteStrategy();
         historyService.setZeroAttempts(userId);
         Event root = eventStorage.getRootEvent();
 
@@ -63,6 +63,7 @@ public class StartHandler extends AbstractFsmHandler {
         }
         log.info("children {}", children);
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
+        //deleteMessageService.deleteAllChat(chatId);
         return messageFactory.makeMessage(chatId, markup, root.getDescription(),
                 deleteStrategy, hp);
     }
@@ -71,12 +72,11 @@ public class StartHandler extends AbstractFsmHandler {
     public BotMessage handleIntro(Update update, Long chatId, Long userId) {
         log.info("Info Handler");
         int hp = ActionType.INTRO.getLifeTime();
-        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
+        DeleteStrategy deleteStrategy = ActionType.INTRO.getDeleteStrategy();
         historyService.setSkipStart(userId);
         historyService.setState(chatId, ActionType.START);
         historyService.setAttemptsToExecute(userId, 2);
         String text = textService.getMarkdown("ru.bot.info.intro");
         return messageFactory.makeTextMessage(chatId, text, deleteStrategy, hp);
     }
-
 }

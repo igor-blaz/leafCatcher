@@ -30,7 +30,7 @@ public class MemoryHandler extends AbstractFsmHandler {
     @FSMRoute(ActionType.PUT_IN_MEMORY)
     public BotMessage putInMemory(Update update, Long chatId, Long userId) {
         int hp = ActionType.PUT_IN_MEMORY.getLifeTime();
-        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
+        DeleteStrategy deleteStrategy = ActionType.PUT_IN_MEMORY.getDeleteStrategy();
         log.info("Put in memory");
         historyService.setState(chatId, ActionType.REPEAT_CURRENT);
         historyService.setAttemptsToExecute(userId, 2);
@@ -38,32 +38,37 @@ public class MemoryHandler extends AbstractFsmHandler {
         if (current == null) {
             return messageFactory.makeTextMessage(chatId,
                     "Сейчас нет события, которое можно запомнить.",
-                    DeleteStrategy.NONE, hp);
+                    DeleteStrategy.DELETE_BY_HP, hp);
         }
 
         historyService.addInMemory(userId, current);
+        if(current.getIsEnd()){
+            return messageFactory.makeTextMessage(chatId,
+                    "💾 Отлично, концовка " + current.getShortName() + " сохранена 🔑",
+                    deleteStrategy, hp);
+        }
         return messageFactory.makeTextMessage(chatId,
-                "Отлично, событие " + current.getShortName() + " сохранено",
+                "💾 Отлично, событие " + current.getShortName() + " сохранено 🔥",
                 deleteStrategy, hp);
     }
 
     @FSMRoute(ActionType.BOND)
     public BotMessage showMemory(Update update, Long chatId, Long userId) {
         int hp = ActionType.BOND.getLifeTime();
-        DeleteStrategy deleteStrategy = ActionType.CREDITS.getDeleteStrategy();
+        DeleteStrategy deleteStrategy = ActionType.BOND.getDeleteStrategy();
         log.info("Show memory");
         historyService.setAttemptsToExecute(userId, 2);
         Event memoryEvent = historyService.showMemory(userId);
         if (memoryEvent == null) {
             return messageFactory.makeTextMessage(chatId,
                     "У вас в памяти ноль событий",
-                    DeleteStrategy.DELETE_ON_NEXT, hp);
+                    DeleteStrategy.DELETE_BY_HP, hp);
         }
 
         Event parent = historyService.getCurrentEvent(userId);
         if (parent == null) {
             return messageFactory.makeTextMessage(chatId,
-                    "Сейчас нет события, к которому можно привязать память.",
+                    "Сейчас нет события, к которому можно привязать событие из памяти.",
                     DeleteStrategy.DELETE_ON_NEXT, hp);
         }
 
@@ -78,7 +83,7 @@ public class MemoryHandler extends AbstractFsmHandler {
         return messageFactory.makeTextMessage(
                 chatId,
                 "Отлично. Получилось событие привязать: " + memoryEvent.getShortName() +
-                        "к событию " + parent.getShortName(),
+                        " к событию " + parent.getShortName(),
                 deleteStrategy, hp
         );
     }
