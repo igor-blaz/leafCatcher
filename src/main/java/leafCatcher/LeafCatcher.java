@@ -33,6 +33,12 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
 
     @Override
     public void consume(Update update) {
+
+        log.info(">>> UPDATE RECEIVED: id={}, date={}, hasMessage={}",
+                update.getUpdateId(),
+                update.getMessage() != null ? update.getMessage().getDate() : null,
+                update.hasMessage());
+
         BotMessage botMessage;
         Long chatId = GetUserIdOrChatId.getChatId(update);
         Long userId = GetUserIdOrChatId.getUserId(update);
@@ -45,7 +51,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
             botMessage = sendMessageByCallback(update, chatId, userId);
         } else {
             SendMessage sendMessage = new SendMessage(chatId.toString(), "Кажется, это ошибка");
-            botMessage = new BotMessage(sendMessage, DeleteStrategy.NONE);
+            botMessage = new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, 0);
 
         }
         ActionType state = historyService.getActualState(chatId);
@@ -64,7 +70,6 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
     }
 
     public BotMessage sendMessageByCallback(Update update, Long chatId, Long userId) {
-        log.info("HAS CALLBACK");
         return eventMainService.makeMessageByCallback(update, chatId, userId);
     }
 
@@ -74,24 +79,37 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
             return;
         }
         ActionType state = historyService.getActualState(chatId);
-        log.warn("🥵repeatConsume {}", state);
+        log.warn("repeatConsume {}", state);
         BotMessage second = eventMainService.makeMessageByText(update, chatId, userId);
         executeMessage(second, chatId);
 
         historyService.setZeroAttempts(userId);
+
     }
 
 
     public void executeMessage(BotMessage botMessage, Long chatId) {
         try {
-            // deleteMessageService.editPreviousMessage(chatId);
+            // 1) СНАЧАЛА чистим прошлое активное сообщение
+            LastMessage prev = deleteMessageService.getLastMessage(chatId);
+            if (prev != null && prev.getMessage() != null) {
+                deleteMessageService.removeButtons(chatId, prev);
+            }
+
+            // 2) Потом отправляем новое
             Message message = telegramClient.execute(botMessage.getSendMessage());
-            LastMessage lastMessage = new LastMessage(message, botMessage.getDeleteStrategy());
-            // deleteMessageService.setLestMessage(chatId, lastMessage);
+            deleteMessageService.decHpForWaiting(chatId);
+
+            // 3) И сохраняем его как новое lastMessage
+            LastMessage lastMessage = new LastMessage(message,
+                    botMessage.getDeleteStrategy(),
+                    botMessage.getHp(), botMessage.getEvent());
+            deleteMessageService.setLastMessage(chatId, lastMessage);
+
+
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-
     }
 
 

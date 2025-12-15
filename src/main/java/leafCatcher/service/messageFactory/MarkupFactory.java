@@ -26,7 +26,7 @@ public class MarkupFactory {
         List<InlineKeyboardRow> otherButtonsRows;
 
         //события, сделать продолжение или концовку
-        List<InlineKeyboardRow> eventRows = makeEventRows(events, userId);
+        List<InlineKeyboardRow> eventRows = makeEventRows(events);
         List<InlineKeyboardRow> backAndActions = backAndActions();
 
 
@@ -49,7 +49,7 @@ public class MarkupFactory {
         return new InlineKeyboardMarkup(keyboard);
     }
 
-    private List<InlineKeyboardRow> makeEventRows(List<Event> events, Long userId) {
+    private List<InlineKeyboardRow> makeEventRows(List<Event> events) {
         List<InlineKeyboardButton> eventsButtons = new ArrayList<>();
         for (Event event : events) {
             InlineKeyboardButton button = InlineKeyboardButton.builder()
@@ -71,24 +71,15 @@ public class MarkupFactory {
 
 
     private List<InlineKeyboardRow> makeActionRows(int eventsSize, Long userId, Event current) {
-        List<InlineKeyboardButton> actionButtons = new ArrayList<>();
         //Кнопка запомнить
         InlineKeyboardButton putInMemory = ButtonFactory.createPutInMemoryButton();
-        actionButtons.add(putInMemory);
         //Помощь
         InlineKeyboardButton help = ButtonFactory.createIDontKnowButton();
-        actionButtons.add(help);
-
-        //Удалить
-        InlineKeyboardButton delete = ButtonFactory.createDeleteButton();
-        actionButtons.add(delete);
-
 
         log.info("CURRENT {}", current);
         InlineKeyboardButton back = ButtonFactory.createRepeatCurrentEventButton();
 
-
-        //Если есть, что добавить ставим (написать концовку написать продолжение  или связать)
+        //Если есть что добавить ставим (написать концовку написать продолжение  или связать)
         if (eventsSize < MAX_EVENTS_FOR_CHILD) {
             //Написать продолжение
             InlineKeyboardButton toBeContinuedButton = ButtonFactory.createToBeContinuedButton();
@@ -98,14 +89,12 @@ public class MarkupFactory {
             if (historyService.showMemory(userId) != null) {
                 InlineKeyboardButton bond = ButtonFactory.createBondButton();
                 return ButtonRowDesign.rowsBy2(toBeContinuedButton,
-                        createEnding, help, putInMemory, bond, back, delete);
+                        createEnding, help, putInMemory, bond, back);
             }
             return ButtonRowDesign.rowsBy2(toBeContinuedButton,
-                    createEnding, help, putInMemory, back, delete);
-
+                    createEnding, help, putInMemory);
         }
-        actionButtons.add(back);
-        return ButtonRowDesign.squareRow2x2(help, putInMemory, back, delete);
+        return ButtonRowDesign.twoOnTopOneBottom(help, putInMemory, back);
     }
 
 
@@ -117,14 +106,4 @@ public class MarkupFactory {
         //Если корень
         return null;
     }
-
-    private InlineKeyboardButton addGoNext(Long userId) {
-        //Если не корень
-        if (!historyService.getCurrentEvent(userId).getIsEnd()) {
-            return ButtonFactory.createGoBackButton();
-        }
-        return null;
-    }
-
-
 }

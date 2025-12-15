@@ -12,7 +12,6 @@ import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
@@ -29,7 +28,12 @@ public class HelpHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.I_DONT_KNOW)
     public BotMessage handleIDontKnow(Update update, Long chatId, Long userId) {
+        int hp = ActionType.I_DONT_KNOW.getLifeTime();
+        DeleteStrategy deleteStrategy = ActionType.I_DONT_KNOW.getDeleteStrategy();
         historyService.setAttemptsToExecute(userId, 2);
-        return messageFactory.makeIDontKnowMessage(chatId, userId, DeleteStrategy.DELETE_ON_NEXT);
+        return messageFactory.makeIDontKnowMessage(chatId,
+                userId,
+                deleteStrategy,
+                hp);
     }
 }

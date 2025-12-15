@@ -32,15 +32,17 @@ public class WarningHandler extends AbstractFsmHandler {
 
     @FSMRoute(ActionType.ADMIN_MODE)
     public BotMessage adminMode(Update update, Long chatId, Long userId) {
+        DeleteStrategy deleteStrategy = ActionType.ADMIN_MODE.getDeleteStrategy();
         log.info("AdminMode method");
         if (update.getMessage().getText().equals(super.adminCleanDb)) {
+            int hp = ActionType.ADMIN_MODE.getLifeTime();
             eventStorage.killThemAll();
             historyService.setState(chatId, ActionType.START);
             historyService.setAttemptsToExecute(userId, 2);
             log.info("🔥🔥🔥🔥 База данных удалена ");
 
             SendMessage sendMessage = new SendMessage(chatId.toString(), "💎💎💎Привет, Админ. База данных очищена");
-            return new BotMessage(sendMessage, DeleteStrategy.NONE);
+            return new BotMessage(sendMessage, deleteStrategy, hp);
         }
         return null;
     }

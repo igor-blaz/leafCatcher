@@ -45,7 +45,7 @@ public abstract class AbstractFsmHandler {
 
     protected SendMessage rejectCallbackWhenExpectingText(Update update, Long chatId, String expectedHint) {
         if (hasCallback(update)) {
-            log.warn("AntiClick: stale callback received when expecting text. data={}", getCallbackData(update));
+            //log.warn("AntiClick: stale callback received when expecting text. data={}", getCallbackData(update));
             return new SendMessage(
                     chatId.toString(),
                     "Эта кнопка уже неактуальна 🙂\nСейчас я жду от тебя " + expectedHint
@@ -54,20 +54,16 @@ public abstract class AbstractFsmHandler {
         return null;
     }
 
-    protected String getText(Update update) {
-        return hasText(update) ? update.getMessage().getText() : null;
-    }
-
     protected String getCallbackData(Update update) {
         return hasCallback(update) ? update.getCallbackQuery().getData() : null;
     }
 
-    protected BotMessage wrongInput(Long chatId, String expected, DeleteStrategy deleteStrategy) {
+    protected BotMessage wrongInput(Long chatId, String expected, DeleteStrategy deleteStrategy, int hp) {
         SendMessage sendMessage = new SendMessage(
                 chatId.toString(),
                 "Сейчас я жду от тебя " + expected + " 🙂"
         );
-        return new BotMessage(sendMessage, deleteStrategy);
+        return new BotMessage(sendMessage, deleteStrategy, hp);
     }
 
     protected void goToEnding(Update update, Long chatId, Long userId) {
@@ -76,16 +72,16 @@ public abstract class AbstractFsmHandler {
         historyService.setState(chatId, ActionType.GET_ENDING);
     }
 
-    protected BotMessage handleNoChildren(Update update, Long chatId, Long userId, DeleteStrategy deleteStrategy) {
+    protected BotMessage handleNoChildren(Update update,
+                                          Long chatId,
+                                          Long userId,
+                                          DeleteStrategy deleteStrategy,
+                                          int hp) {
         log.warn("no children events");
         historyService.setAttemptsToExecute(userId, 2);
         historyService.setState(chatId, ActionType.WRITE_NEXT_QUESTION);
         SendMessage sendMessage = new SendMessage(chatId.toString(), "Продолжение еще не написано");
-        return new BotMessage(sendMessage, DeleteStrategy.NONE);
+        return new BotMessage(sendMessage, DeleteStrategy.DELETE_BY_HP, 2);
     }
 
-    protected void handleNoRoot(Update update, Long chatId, Long userId) {
-        historyService.setState(chatId, ActionType.ROOT_IS_ABSENCE_INFO);
-        historyService.setAttemptsToExecute(userId, 2);
-    }
 }

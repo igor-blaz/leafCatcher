@@ -8,16 +8,17 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 @UtilityClass
 public class ButtonFactory {
     private static final String BACK = "⏪ Назад";
+    private static final String BACK_TO_CREATED = "⏪ К новому событию";
     private static final String DO_ACTION = "⚡ Действие";
     private static final String NEXT = "🔥 Далее";
     private static final String WRITE_NEXT = "🪶 Продолжить";
     private static final String I_WANT_WRITE_ENDING = "🔑 Закончить";
-    private static final String I_DONT_WANT_WRITE = "🚫 Вернуться";
+    private static final String I_DONT_WANT_WRITE = "⏪ К событиям";
     private static final String CREDITS = "💎 Конец?";
     private static final String HELP_ME = "❓Помощь";
     private static final String START = "⚡ В начало";
     private static final String RANDOM = "🧨 Случайное событие";
-    private static final String PUT_IN_MEMORY = "🧠 Запомнить";
+    private static final String PUT_IN_MEMORY = "💾 Запомнить";
     private static final String BOND = "🔗 Связать с памятью";
     private static final String DELETE = "🗑️ Удалить";
 
@@ -60,6 +61,13 @@ public class ButtonFactory {
     public InlineKeyboardButton createGoBackButton() {
         return InlineKeyboardButton.builder()
                 .text(BACK)
+                .callbackData(ActionType.GO_BACK.toString())
+                .build();
+    }
+
+    public InlineKeyboardButton createGoBackButtonForQuestion() {
+        return InlineKeyboardButton.builder()
+                .text(BACK_TO_CREATED)
                 .callbackData(ActionType.GO_BACK.toString())
                 .build();
     }

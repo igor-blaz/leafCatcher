@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,34 +30,68 @@ public class MessageFactory {
 
     public BotMessage makeMessage(long chatId,
                                   InlineKeyboardMarkup markup,
-                                  String description, DeleteStrategy deleteStrategy) {
+                                  String description,
+                                  DeleteStrategy deleteStrategy,
+                                  int hp) {
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
                 .text(description)
                 .replyMarkup(markup)
                 .build();
-        return new BotMessage(sendMessage, deleteStrategy);
+        return new BotMessage(sendMessage, deleteStrategy, hp);
     }
 
-    public BotMessage makeWriteOrNotMessage(Long chatId, Event event, DeleteStrategy deleteStrategy) {
+    public BotMessage makeEventMessage(long chatId,
+                                       InlineKeyboardMarkup markup,
+                                       Event event,
+                                       DeleteStrategy deleteStrategy,
+                                       int hp
+
+    ) {
+        SendMessage sendMessage = SendMessage.builder()
+                .chatId(chatId)
+                .text(event.getDescription())
+                .replyMarkup(markup)
+                .build();
+        return new BotMessage(sendMessage, deleteStrategy, hp, event);
+    }
+
+
+    public BotMessage makeWriteOrNotMessage(Long chatId,
+                                            Long userId,
+                                            Event event,
+                                            DeleteStrategy deleteStrategy,
+                                            int hp) {
         InlineKeyboardButton iDontWant = ButtonFactory.createIDontWantWrite();
         InlineKeyboardButton iWant = ButtonFactory.createToBeContinuedButton();
         InlineKeyboardButton iWantWriteEnding = ButtonFactory.createWriteEndButton();
         InlineKeyboardButton insertFromMemory = ButtonFactory.createBondButton();
         InlineKeyboardButton putInMemory = ButtonFactory.createPutInMemoryButton();
         InlineKeyboardButton delete = ButtonFactory.createDeleteButton();
+        InlineKeyboardButton help = ButtonFactory.createIDontKnowButton();
 
-        List<InlineKeyboardRow> row = ButtonRowDesign.rowsBy2(iWant, iDontWant,
-                iWantWriteEnding, putInMemory, insertFromMemory, delete);
+        boolean hasMemory = historyService.showMemory(userId) != null;
 
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup(row);
-        return makeMessage(chatId, markup, event.getDescription(), deleteStrategy);
+        List<InlineKeyboardButton> buttons = new ArrayList<>(List.of(
+                iWant, iDontWant,
+                iWantWriteEnding, putInMemory
+        ));
+
+        if (hasMemory) buttons.add(insertFromMemory);
+
+        buttons.addAll(List.of(help, delete));
+
+        List<InlineKeyboardRow> rows = ButtonRowDesign.rowsBy2(buttons.toArray(InlineKeyboardButton[]::new));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup(rows);
+        return makeMessage(chatId, markup, event.getDescription(), deleteStrategy, hp);
     }
 
     public BotMessage makeQuestionMessage(Update update,
                                           Long chatId,
                                           Long userId,
-                                          DeleteStrategy deleteStrategy) {
+                                          DeleteStrategy deleteStrategy,
+                                          int hp) {
         InlineKeyboardButton goBack = ButtonFactory.createGoBackButton();
         InlineKeyboardButton goNext = ButtonFactory.createGoNextButton();
         InlineKeyboardRow row = new InlineKeyboardRow();
@@ -69,33 +104,48 @@ public class MessageFactory {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboard);
         String name = GetTelegramUserName.getName(update);
 
-        return makeMessage(chatId, markup, name + " ,куда пойдем дальше? ", deleteStrategy);
+        return makeMessage(chatId,
+                markup,
+                name + " ,куда пойдем дальше? ",
+                deleteStrategy,
+                hp);
     }
 
-    public BotMessage makeAfterEndMessage(Update update, Long chatId, Long userId, DeleteStrategy deleteStrategy) {
+    public BotMessage makeAfterEndMessage(Update update,
+                                          Long chatId,
+                                          Long userId,
+                                          DeleteStrategy deleteStrategy,
+                                          int hp) {
         InlineKeyboardButton credits = ButtonFactory.createCreditsButton();
         InlineKeyboardButton goToStart = ButtonFactory.createStartButton();
         InlineKeyboardButton back = ButtonFactory.createGoBackButton();
         InlineKeyboardButton random = ButtonFactory.createRandomButton();
         InlineKeyboardButton putInMemory = ButtonFactory.createPutInMemoryButton();
+
         List<InlineKeyboardRow> keyboardRows = ButtonRowDesign.squareRow2x2PlusOne(goToStart,
                 back, random, putInMemory, credits);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboardRows);
         String name = GetTelegramUserName.getName(update);
         return makeMessage(chatId, markup,
-                name + " поздравляю, тебе удалось дойти до конца", deleteStrategy);
+                name + " поздравляю, тебе удалось дойти до конца", deleteStrategy, hp);
     }
 
-    public BotMessage makeTextMessage(Long chatId, String text, DeleteStrategy strategy) {
+    public BotMessage makeTextMessage(Long chatId,
+                                      String text,
+                                      DeleteStrategy strategy,
+                                      int hp) {
         SendMessage sendMessage = new SendMessage(chatId.toString(), text);
         sendMessage.setParseMode(ParseMode.HTML);
-        return new BotMessage(sendMessage, strategy);
+        return new BotMessage(sendMessage, strategy, hp);
     }
 
-    public BotMessage makeIDontKnowMessage(Long chatId, Long userId, DeleteStrategy deleteStrategy) {
+    public BotMessage makeIDontKnowMessage(Long chatId,
+                                           Long userId,
+                                           DeleteStrategy deleteStrategy,
+                                           int hp) {
         ActionType currentAction = historyService.getActualState(chatId);
         if (currentAction == null) {
-            return makeTextMessage(chatId, textService.get("bot.help.default"), deleteStrategy);
+            return makeTextMessage(chatId, textService.get("bot.help.default"), deleteStrategy, hp);
         }
         log.warn("CurrentAction {}", currentAction);
         String hint;
@@ -103,10 +153,13 @@ public class MessageFactory {
             case START -> {
                 hint = textService.getMarkdown("ru.bot.info.start");
             }
-            case RANDOM -> {
-                hint = "Кажется, ты нашел Пасхалку 💀🏴‍. Красава.  Можешь написать  автору о нахождении пасхалки. ️";
+            case WRITE_NEXT_QUESTION -> {
+                hint = textService.getMarkdown("ru.bot.info.writeNext");
             }
-            case GET_CHILD -> {
+            case RANDOM -> {
+                hint = "Кажется, тебе удалось найти пасхалку 💀🏴‍. Молодец.  Можешь написать  автору о нахождении пасхалки. ️";
+            }
+            case GET_CHILD, REPEAT_CURRENT -> {
                 hint = textService.getMarkdown("ru.bot.info.getchild");
             }
             case CREDITS -> {
@@ -125,7 +178,7 @@ public class MessageFactory {
         historyService.setAttemptsToExecute(userId, 2);
         SendMessage sendMessage = new SendMessage(chatId.toString(), hint);
         sendMessage.setParseMode(ParseMode.HTML);
-        return new BotMessage(sendMessage, deleteStrategy);
+        return new BotMessage(sendMessage, deleteStrategy, hp);
 
     }
 

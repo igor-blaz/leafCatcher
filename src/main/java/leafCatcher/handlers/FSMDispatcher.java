@@ -7,7 +7,6 @@ import leafCatcher.history.HistoryService;
 import leafCatcher.model.Event;
 import leafCatcher.service.deleteStrategy.BotMessage;
 import leafCatcher.service.deleteStrategy.DeleteStrategy;
-import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -31,7 +30,6 @@ public class FSMDispatcher {
     private final HistoryService historyService;
     private final EventStorage eventStorage;
     private final List<AbstractFsmHandler> handlers;
-    private final MessageFactory messageFactory; // если не нужен – можно убрать
 
     private final Map<ActionType, FsmRoute> routes = new EnumMap<>(ActionType.class);
 
@@ -93,7 +91,7 @@ public class FSMDispatcher {
                 return wrapSendMessage(
                         new SendMessage(chatId.toString(),
                                 "Я не знаю, что делать в состоянии " + nextState + " 🤔"),
-                        DeleteStrategy.NONE
+                        DeleteStrategy.DELETE_ON_NEXT, 0
                 );
             }
 
@@ -111,7 +109,7 @@ public class FSMDispatcher {
         if (route == null) {
             return wrapSendMessage(
                     new SendMessage(chatId.toString(), "Я не знаю, что делать в этом состоянии 🤔"),
-                    DeleteStrategy.NONE
+                    DeleteStrategy.DELETE_ON_NEXT, 0
             );
         }
 
@@ -128,24 +126,19 @@ public class FSMDispatcher {
      * Если хендлер вернул null или что-то ещё — это ошибка в хендлере.
      */
     private BotMessage castToBotMessage(Object result, ActionType state, Long chatId) {
-        if (result == null) {
-            // Здесь можно либо кинуть исключение, либо вернуть диагностическое сообщение.
-            // Я делаю диагностическое сообщение, чтобы бот не падал в проде.
-            log.error("Хендлер для {} вернул null. Все @FSMRoute должны возвращать BotMessage.", state);
-            return wrapSendMessage(
-                    new SendMessage(chatId.toString(),
-                            "Внутренняя ошибка: хендлер для " + state + " не вернул сообщение."),
-                    DeleteStrategy.NONE
-            );
-        }
-
-        if (result instanceof BotMessage bm) {
-            return bm;
-        }
-
-        if (result instanceof SendMessage sm) {
-            log.warn("Хендлер для {} вернул SendMessage. Лучше вернуть BotMessage напрямую.", state);
-            return new BotMessage(sm, DeleteStrategy.NONE);
+        switch (result) {
+            case null -> {
+               return null;
+            }
+            case BotMessage bm -> {
+                return bm;
+            }
+            case SendMessage sm -> {
+                log.warn("Хендлер для {} вернул SendMessage. Лучше вернуть BotMessage напрямую.", state);
+                return new BotMessage(sm, DeleteStrategy.DELETE_ON_NEXT, 0);
+            }
+            default -> {
+            }
         }
 
         // Совсем неожиданный тип — логируем и возвращаем диагностическое сообщение.
@@ -153,12 +146,12 @@ public class FSMDispatcher {
         return wrapSendMessage(
                 new SendMessage(chatId.toString(),
                         "Внутренняя ошибка: неожиданный результат хендлера для " + state + "."),
-                DeleteStrategy.NONE
+                DeleteStrategy.DELETE_ON_NEXT, 0
         );
     }
 
-    private BotMessage wrapSendMessage(SendMessage sendMessage, DeleteStrategy strategy) {
-        return new BotMessage(sendMessage, strategy);
+    private BotMessage wrapSendMessage(SendMessage sendMessage, DeleteStrategy strategy, int hp) {
+        return new BotMessage(sendMessage, strategy, hp);
     }
 
     private record FsmRoute(Object bean, Method method) {
