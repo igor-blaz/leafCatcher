@@ -11,7 +11,7 @@ public class ButtonFactory {
     private static final String BACK_TO_CREATED = "⏪ К новому событию";
     private static final String DO_ACTION = "⚡ Действие";
     private static final String NEXT = "🔥 Далее";
-    private static final String WRITE_NEXT = "✒️ Продолжить";
+    private static final String WRITE_NEXT = "🪶 Продолжить";
     private static final String I_WANT_WRITE_ENDING = "🔑 Закончить";
     private static final String I_DONT_WANT_WRITE = "⏪ К событиям";
     private static final String CREDITS = "💎 Конец?";

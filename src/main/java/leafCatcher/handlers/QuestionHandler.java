@@ -30,7 +30,10 @@ public class QuestionHandler extends AbstractFsmHandler {
                            DraftService draftService) {
         super(historyService, messageFactory, markupFactory,
                 eventStorage, textService, draftService);
+
     }
+
+    private static final String ADMIN_NAME = "Blaz201";
 
     @FSMRoute(ActionType.BACK_OR_FORWARD_QUESTION)
     public BotMessage handleRootButton(Update update, Long chatId, Long userId) {
@@ -44,7 +47,7 @@ public class QuestionHandler extends AbstractFsmHandler {
         int hp = ActionType.WRITE_NEXT_QUESTION.getLifeTime();
         DeleteStrategy deleteStrategy = ActionType.WRITE_NEXT_QUESTION.getDeleteStrategy();
         Event current = historyService.getCurrentEvent(userId);
-        return messageFactory.makeWriteOrNotMessage(chatId, current, deleteStrategy, hp);
+        return messageFactory.makeWriteOrNotMessage(chatId, userId, current, deleteStrategy, hp);
     }
 
     @FSMRoute(ActionType.DO_ACTION)
@@ -71,7 +74,8 @@ public class QuestionHandler extends AbstractFsmHandler {
             return messageFactory.makeTextMessage(chatId,
                     name + " вы можете удалять только те события, у которых нет дочерних событий☹️",
                     DeleteStrategy.DELETE_BY_HP, hp);
-        } else if (!name.equals(currentEventForDelete.getAuthor())) {
+        } else if (!name.equals(currentEventForDelete.getAuthor()) &&
+                !name.equals(ADMIN_NAME)) {
             return messageFactory.makeTextMessage(chatId, name + " можно удалять только те события, которые создали вы." +
                     " У этого события другой автор", DeleteStrategy.DELETE_BY_HP, hp);
         }

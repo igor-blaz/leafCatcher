@@ -22,7 +22,6 @@ import java.util.List;
 @Slf4j
 @Component
 public class StartHandler extends AbstractFsmHandler {
-    private final DeleteMessageService deleteMessageService;
 
     public StartHandler(HistoryService historyService,
                         MessageFactory messageFactory,
@@ -37,7 +36,6 @@ public class StartHandler extends AbstractFsmHandler {
                 eventStorage,
                 textService,
                 draftService);
-        this.deleteMessageService = deleteMessageService;
     }
 
     @FSMRoute(ActionType.START)

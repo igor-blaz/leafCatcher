@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -57,6 +58,7 @@ public class MessageFactory {
 
 
     public BotMessage makeWriteOrNotMessage(Long chatId,
+                                            Long userId,
                                             Event event,
                                             DeleteStrategy deleteStrategy,
                                             int hp) {
@@ -66,11 +68,22 @@ public class MessageFactory {
         InlineKeyboardButton insertFromMemory = ButtonFactory.createBondButton();
         InlineKeyboardButton putInMemory = ButtonFactory.createPutInMemoryButton();
         InlineKeyboardButton delete = ButtonFactory.createDeleteButton();
+        InlineKeyboardButton help = ButtonFactory.createIDontKnowButton();
 
-        List<InlineKeyboardRow> row = ButtonRowDesign.rowsBy2(iWant, iDontWant,
-                iWantWriteEnding, putInMemory, insertFromMemory, delete);
+        boolean hasMemory = historyService.showMemory(userId) != null;
 
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup(row);
+        List<InlineKeyboardButton> buttons = new ArrayList<>(List.of(
+                iWant, iDontWant,
+                iWantWriteEnding, putInMemory
+        ));
+
+        if (hasMemory) buttons.add(insertFromMemory);
+
+        buttons.addAll(List.of(help, delete));
+
+        List<InlineKeyboardRow> rows = ButtonRowDesign.rowsBy2(buttons.toArray(InlineKeyboardButton[]::new));
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup(rows);
         return makeMessage(chatId, markup, event.getDescription(), deleteStrategy, hp);
     }
 
@@ -108,6 +121,7 @@ public class MessageFactory {
         InlineKeyboardButton back = ButtonFactory.createGoBackButton();
         InlineKeyboardButton random = ButtonFactory.createRandomButton();
         InlineKeyboardButton putInMemory = ButtonFactory.createPutInMemoryButton();
+
         List<InlineKeyboardRow> keyboardRows = ButtonRowDesign.squareRow2x2PlusOne(goToStart,
                 back, random, putInMemory, credits);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup(keyboardRows);
@@ -139,10 +153,13 @@ public class MessageFactory {
             case START -> {
                 hint = textService.getMarkdown("ru.bot.info.start");
             }
-            case RANDOM -> {
-                hint = "Кажется, ты нашел Пасхалку 💀🏴‍. Красава.  Можешь написать  автору о нахождении пасхалки. ️";
+            case WRITE_NEXT_QUESTION -> {
+                hint = textService.getMarkdown("ru.bot.info.writeNext");
             }
-            case GET_CHILD -> {
+            case RANDOM -> {
+                hint = "Кажется, тебе удалось найти пасхалку 💀🏴‍. Молодец.  Можешь написать  автору о нахождении пасхалки. ️";
+            }
+            case GET_CHILD, REPEAT_CURRENT -> {
                 hint = textService.getMarkdown("ru.bot.info.getchild");
             }
             case CREDITS -> {
