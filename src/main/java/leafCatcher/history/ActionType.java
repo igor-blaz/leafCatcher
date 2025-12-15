@@ -30,7 +30,7 @@ public enum ActionType {
 
     PUT_IN_MEMORY(2, DeleteStrategy.DELETE_BY_HP),
     BOND(2, DeleteStrategy.DELETE_BY_HP),
-    DELETE(2, DeleteStrategy.DELETE_ON_NEXT),
+    DELETE(3, DeleteStrategy.DELETE_BY_HP),
 
     END_IS_ABSENCE_INFO(2, DeleteStrategy.DELETE_ON_NEXT),
     GET_ENDING(2, DeleteStrategy.DELETE_BY_HP),
