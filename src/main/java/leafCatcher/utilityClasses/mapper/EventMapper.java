@@ -18,10 +18,31 @@ public class EventMapper {
         child.setIsRoot(false);
         child.setIsEnd(isEnd);
         child.setIsChangeable(true);
+        child.setIsDummy(false);
+        child.setOriginalId("NULL");
         child.setEndNumber(0);
         child.setAuthor(update.getMessage().getFrom().getUserName());
 
         return child;
+    }
+
+    public static Event makeDummyEvent(Update update, String buttonName, Event event) {
+        Event dummy = new Event();
+        dummy.setTelegramId(1L);
+        dummy.setUpdateId(0);
+        dummy.setDescription("description");
+        dummy.setShortName("🔷 " + buttonName);
+        dummy.setIsRoot(false);
+        dummy.setIsEnd(event.getIsEnd());
+        dummy.setIsChangeable(true);
+
+        dummy.setIsDummy(true);
+        dummy.setOriginalId(event.getElementId());
+
+        dummy.setEndNumber(0);
+        dummy.setAuthor(update.getMessage().getFrom().getUserName());
+
+        return dummy;
     }
 
     public static Event getAbsentEvent() {
@@ -35,6 +56,8 @@ public class EventMapper {
         child.setIsRoot(false);
         child.setIsEnd(false);
         child.setIsChangeable(true);
+        child.setIsDummy(false);
+        child.setOriginalId("NULL");
         child.setEndNumber(-1);
         child.setAuthor("null");
         return child;
@@ -50,6 +73,8 @@ public class EventMapper {
         root.setIsRoot(true);
         root.setIsEnd(false);
         root.setIsChangeable(true);
+        root.setIsDummy(false);
+        root.setOriginalId("NULL");
         root.setEndNumber(0);
         root.setAuthor(update.getMessage().getFrom().getUserName());
 

@@ -18,6 +18,8 @@ import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+import java.util.List;
+
 
 @Slf4j
 @AllArgsConstructor
@@ -78,6 +80,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
         if (attempts <= 1) {
             return;
         }
+
         ActionType state = historyService.getActualState(chatId);
         log.warn("repeatConsume {}", state);
         BotMessage second = eventMainService.makeMessageByText(update, chatId, userId);

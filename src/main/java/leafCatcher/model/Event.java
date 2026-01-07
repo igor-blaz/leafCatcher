@@ -26,6 +26,10 @@ public class Event {
     private Boolean isRoot = false;
     private Boolean isEnd = false;
     private Boolean isChangeable = true;
+
+    private Boolean isDummy = true;
+    private String originalId;
+
     private Integer endNumber;
     private String author;
 

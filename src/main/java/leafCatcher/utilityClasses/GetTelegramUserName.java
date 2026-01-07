@@ -10,12 +10,14 @@ public class GetTelegramUserName {
 
     public static String getName(Update update) {
         if (update.hasMessage() && update.getMessage().getFrom() != null) {
-            return update.getMessage().getFrom().getUserName();
+            String username = update.getMessage().getFrom().getUserName();
+            return username != null ? username : "Игрок💖";
         }
         if (update.hasCallbackQuery() && update.getCallbackQuery().getFrom() != null) {
-            return update.getCallbackQuery().getFrom().getUserName();
+            String username = update.getCallbackQuery().getFrom().getUserName();
+            return username != null ? username : "Игрок💖";
         }
-        return " Игрок💖 ";
+        return "Игрок💖";
     }
 
 }

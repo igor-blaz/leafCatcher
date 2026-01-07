@@ -89,7 +89,7 @@ public class ButtonFactory {
     public InlineKeyboardButton createBondButton() {
         return InlineKeyboardButton.builder()
                 .text(BOND)
-                .callbackData(ActionType.BOND.toString())
+                .callbackData(ActionType.BOND_BUTTON_IS_ABSENCE_INFO.toString())
                 .build();
     }
 
