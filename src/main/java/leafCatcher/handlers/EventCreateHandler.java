@@ -66,8 +66,10 @@ public class EventCreateHandler extends AbstractFsmHandler {
                     "Не могу создать кнопку: не найден родительский лист 🥲",
                     DeleteStrategy.DELETE_ON_NEXT, hp);
         }
+
         Event child = EventMapper.makeEvent(update, description, buttonName, false);
         child = eventStorage.saveChild(parent.getElementId(), child);
+
         historyService.setCurrentEvent(userId, child);
         historyService.setAttemptsToExecute(chatId, 2);
         historyService.setState(chatId, ActionType.BACK_OR_FORWARD_QUESTION);
@@ -104,6 +106,9 @@ public class EventCreateHandler extends AbstractFsmHandler {
         int hp = ActionType.GET_CHILD.getLifeTime();
         DeleteStrategy deleteStrategy = ActionType.GET_CHILD.getDeleteStrategy();
         Event parent = historyService.getCurrentEvent(userId);
+        if (parent.getIsDummy()) {
+            parent = eventStorage.getEventById(parent.getOriginalId());
+        }
         if (parent.getIsEnd()) {
             goToEnding(update, chatId, userId);
             log.error("!!!!!!!!!!!!!!!!!!!!!!");

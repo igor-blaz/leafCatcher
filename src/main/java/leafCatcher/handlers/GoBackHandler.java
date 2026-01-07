@@ -47,10 +47,20 @@ public class GoBackHandler extends AbstractFsmHandler {
         DeleteStrategy deleteStrategy = ActionType.GO_BACK.getDeleteStrategy();
         historyService.setState(chatId, ActionType.GET_CHILD);
         Event child = historyService.getCurrentEvent(userId);
-        Event parent = eventStorage.getParent(child.getElementId());
-        historyService.setCurrentEvent(userId, parent);
 
-      //  deleteMessageService.deleteEventMessageFromChat(chatId, child);
+        if (child.getIsDummy()) {
+            log.info("Событие является пустышкой, получаем оригинальное событие");
+            child = eventStorage.getEventById(child.getOriginalId());
+        }
+
+        Event parent = eventStorage.getParent(child.getElementId());
+
+        if (parent.getIsDummy()) {
+            log.info("Родительское событие является пустышкой, получаем оригинальное событие");
+            parent = eventStorage.getEventById(parent.getOriginalId());
+        }
+
+        historyService.setCurrentEvent(userId, parent);
 
         List<Event> patentsChildren = eventStorage.getChildren(parent.getElementId());
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(patentsChildren, userId);

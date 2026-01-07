@@ -102,6 +102,9 @@ public class EndingHandler extends AbstractFsmHandler {
             return wrongInput(chatId, "Нужно нажать кнопку", DeleteStrategy.DELETE_ON_NEXT, hp);
         }
         Event ending = historyService.getCurrentEvent(userId);
+        if (ending.getIsDummy()) {
+            ending = eventStorage.getEventById(ending.getOriginalId());
+        }
         historyService.setState(chatId, ActionType.AFTER_END_CHOICE);
         SendMessage sendMessage = new SendMessage(chatId.toString(), ending.getDescription());
         return new BotMessage(sendMessage, deleteStrategy, hp, ending);

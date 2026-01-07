@@ -32,7 +32,7 @@ public class RandomHandler extends AbstractFsmHandler {
         int hp = ActionType.RANDOM.getLifeTime();
         DeleteStrategy deleteStrategy = ActionType.RANDOM.getDeleteStrategy();
         Event parent = eventStorage.getRandom();
-        if (parent == null) {
+        if (parent == null || parent.getIsDummy()) {
             parent = eventStorage.getRootEvent();
         }
         List<Event> children = eventStorage.getChildren(parent.getElementId());
