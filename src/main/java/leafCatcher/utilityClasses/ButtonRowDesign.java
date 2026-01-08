@@ -78,13 +78,17 @@ public class ButtonRowDesign {
         for (int i = 0; i < buttons.length; i += 2) {
             InlineKeyboardRow row = new InlineKeyboardRow();
 
-            row.add(buttons[i]);
+            if (buttons[i] != null) {
+                row.add(buttons[i]);
+            }
 
-            if (i + 1 < buttons.length) {
+            if (i + 1 < buttons.length && buttons[i + 1] != null) {
                 row.add(buttons[i + 1]);
             }
 
-            rows.add(row);
+            if (!row.isEmpty()) {
+                rows.add(row);
+            }
         }
 
         return rows;

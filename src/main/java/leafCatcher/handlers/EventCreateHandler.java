@@ -109,9 +109,9 @@ public class EventCreateHandler extends AbstractFsmHandler {
         if (parent.getIsDummy()) {
             parent = eventStorage.getEventById(parent.getOriginalId());
         }
+
         if (parent.getIsEnd()) {
             goToEnding(update, chatId, userId);
-            log.error("!!!!!!!!!!!!!!!!!!!!!!");
             return null;
         }
         List<Event> children = eventStorage.getChildren(parent.getElementId());

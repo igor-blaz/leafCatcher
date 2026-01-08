@@ -55,8 +55,8 @@ public class QuestionHandler extends AbstractFsmHandler {
         int hp = ActionType.DO_ACTION.getLifeTime();
         DeleteStrategy deleteStrategy = ActionType.DO_ACTION.getDeleteStrategy();
         Event current = historyService.getCurrentEvent(userId);
-        int size = eventStorage.getChildren(current.getElementId()).size();
-        InlineKeyboardMarkup markup = markupFactory.makeActionMarkup(size, userId, current);
+        List<Event> children = eventStorage.getChildren(current.getElementId());
+        InlineKeyboardMarkup markup = markupFactory.makeActionMarkup(children, userId, current);
         return messageFactory.makeMessage(chatId, markup, "Вот действия", deleteStrategy, hp);
     }
 
