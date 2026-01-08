@@ -66,10 +66,12 @@ public class QuestionHandler extends AbstractFsmHandler {
         int hp = ActionType.DELETE.getLifeTime();
         DeleteStrategy deleteStrategy = ActionType.DELETE.getDeleteStrategy();
         Event currentEventForDelete = historyService.getCurrentEvent(userId);
+
         List<Event> childList = eventStorage.getChildren(currentEventForDelete.getElementId());
         String name = GetTelegramUserName.getName(update);
         historyService.setAttemptsToExecute(userId, 2);
-        if (!childList.isEmpty()) {
+
+        if (hasNonDummyEvent(childList)) {
             log.info("Current {}", historyService.getCurrentEvent(userId));
             return messageFactory.makeTextMessage(chatId,
                     name + " вы можете удалять только те события, у которых нет дочерних событий☹️",
@@ -87,10 +89,17 @@ public class QuestionHandler extends AbstractFsmHandler {
         }
         historyService.setCurrentEvent(userId, parent);
         historyService.setState(chatId, ActionType.REPEAT_CURRENT);
-
+        if (!childList.isEmpty()) {
+            for (Event event : childList) {
+                eventStorage.deleteById(event.getElementId());
+            }
+        }
         eventStorage.deleteById(currentEventForDelete.getElementId());
         return messageFactory.makeTextMessage(chatId, "Отлично, событие удалено🔥", deleteStrategy, hp);
     }
 
+    public boolean hasNonDummyEvent(List<Event> events) {
+        return events.stream().anyMatch(event -> !event.getIsDummy());
+    }
 
 }

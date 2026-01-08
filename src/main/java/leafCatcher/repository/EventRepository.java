@@ -56,29 +56,6 @@ public interface EventRepository extends Neo4jRepository<Event, String> {
     void linkParentChildNoBack(@Param("parentId") String parentId,
                          @Param("childId") String childId);
 
-    @Query("""
-            MATCH (p:Event {elementId: $parentElementId})
-            CREATE (e:Event {
-                elementId: randomUUID(),
-                telegramId: $telegramId,
-                updateId: $updateId,
-                shortName: $shortName,
-                description: $description,
-                isRoot: false,
-                isEnd: false,
-                isChangeable: true,
-                author: $author
-            })
-            MERGE (p)-[:NEXT]->(e)
-            MERGE (e)-[:PREVIOUS]->(p)
-            RETURN e
-            """)
-    Event createChild(@Param("parentElementId") String parentElementId,
-                      @Param("telegramId") Long telegramId,
-                      @Param("updateId") Integer updateId,
-                      @Param("shortName") String shortName,
-                      @Param("description") String description,
-                      @Param("author") String author);
 
     @Query("""
             MATCH (child:Event {elementId: $childElementId})-[:PREVIOUS]->(parent:Event)
