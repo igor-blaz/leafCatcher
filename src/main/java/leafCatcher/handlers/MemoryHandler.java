@@ -114,7 +114,7 @@ public class MemoryHandler extends AbstractFsmHandler {
 
         // Сохраняем дочернее событие
         eventStorage.saveChildNoBack(parent.getElementId(), dummy);
-        historyService.setState(chatId, ActionType.REPEAT_CURRENT);
+        //historyService.setState(chatId, ActionType.REPEAT_CURRENT);
         return messageFactory.makeTextMessage(
                 chatId,
                 "Отлично. Получилось событие привязать: " + memoryEvent.getShortName() +

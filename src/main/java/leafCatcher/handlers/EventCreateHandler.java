@@ -133,6 +133,7 @@ public class EventCreateHandler extends AbstractFsmHandler {
             SendMessage sendMessage = new SendMessage(chatId.toString(), "Не найдено текущее событие 🥲");
             return new BotMessage(sendMessage, DeleteStrategy.DELETE_ON_NEXT, hp);
         }
+
         List<Event> children = eventStorage.getChildren(current.getElementId());
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
         return messageFactory.makeEventMessage(chatId, markup, current, deleteStrategy, hp);
