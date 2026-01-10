@@ -11,8 +11,6 @@ import leafCatcher.service.deleteStrategy.DeleteStrategy;
 import leafCatcher.service.messageFactory.MarkupFactory;
 import leafCatcher.service.messageFactory.MessageFactory;
 import leafCatcher.storage.EventStorage;
-import leafCatcher.usersMemory.MemoryService;
-import leafCatcher.usersMemory.MemoryStorage;
 import leafCatcher.utilityClasses.mapper.EventMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -114,7 +112,8 @@ public class MemoryHandler extends AbstractFsmHandler {
 
         // Сохраняем дочернее событие
         eventStorage.saveChildNoBack(parent.getElementId(), dummy);
-        //historyService.setState(chatId, ActionType.REPEAT_CURRENT);
+        historyService.setCurrentEvent(userId, parent);
+        historyService.setState(chatId, ActionType.REPEAT_CURRENT);
         return messageFactory.makeTextMessage(
                 chatId,
                 "Отлично. Получилось событие привязать: " + memoryEvent.getShortName() +

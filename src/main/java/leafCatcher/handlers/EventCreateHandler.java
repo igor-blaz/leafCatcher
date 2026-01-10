@@ -115,9 +115,9 @@ public class EventCreateHandler extends AbstractFsmHandler {
             return null;
         }
         List<Event> children = eventStorage.getChildren(parent.getElementId());
-        if (children.isEmpty() && !parent.getIsEnd()) {
-            return handleNoChildren(update, chatId, userId, DeleteStrategy.DELETE_BY_HP, hp);
-        }
+//        if (children.isEmpty() && !parent.getIsEnd()) {
+//            return handleNoChildren(update, chatId, userId, DeleteStrategy.DELETE_BY_HP, hp);
+//        }
         InlineKeyboardMarkup markup = markupFactory.makeMarkup(children, userId);
         return messageFactory.makeEventMessage(chatId, markup, parent,
                 deleteStrategy, hp);
