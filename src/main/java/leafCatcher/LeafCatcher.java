@@ -55,7 +55,7 @@ public class LeafCatcher implements LongPollingSingleThreadUpdateConsumer {
 
         }
         ActionType state = historyService.getActualState(chatId);
-        log.warn("🥵consume {}", state);
+        log.warn("consume {}", state);
         executeMessage(botMessage, chatId);
         repeatConsume(update, chatId, userId);
     }
